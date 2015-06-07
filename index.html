@@ -162,10 +162,9 @@
 </blockquote>
 <p>也就是说Groovy有自己的语法规则，通过查询Groovy的相关API，发现就执行命令来说Groovy的String对象中有个<code>&quot;command&quot;.execute()</code>可以执行系统命令，也就是说如果我们能找到一个可以控制的String类型的变量，就可以执行任意命令了，很遗憾，如果直接<code>&quot;ipconfig&quot;.execute()</code>这样就触发了Groovy的的黑名单。<br>如果用反射，可以这样<code>this.class.toString().valueOf(&#39;whoami&#39;).execute().getText()</code>，即可完美实现，但是同过查阅<code>valueOf()</code>这个函数，发现只要是String类型的变量即可调用，通过查阅API发现Groovy的<code>dump()</code>函数返回类型是String，所以完美的远程命令执行Exploit就出来了<code>dump().valueOf(&#39;ifconfig&#39;).execute().text</code>。</p>
 <h3 id="参考链接">参考链接</h3><hr>
-<pre><code>[<span class="number">1</span>] <span class="symbol">:http</span><span class="symbol">://www</span>.ibm.com/developerworks/cn/education/java/j-groovy/j-groovy.html
+<p>  [1] :<a href="http://www.ibm.com/developerworks/cn/education/java/j-groovy/j-groovy.html" target="_blank" rel="external">http://www.ibm.com/developerworks/cn/education/java/j-groovy/j-groovy.html</a></p>
+<p>  [2] :<a href="http://zone.wooyun.org/content/18894" target="_blank" rel="external">http://zone.wooyun.org/content/18894</a></p>
 
-[<span class="number">2</span>] <span class="symbol">:http</span><span class="symbol">://zone</span>.wooyun.org/content/<span class="number">18894</span>
-</code></pre>
         
         
         <p class="article-more-link">

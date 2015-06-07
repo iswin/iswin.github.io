@@ -161,9 +161,7 @@
 <p>Groovy 是 JVM 的一个替代语言 —替代 是指可以用 Groovy 在 Java 平台上进行 Java 编程，使用方式基本与使用 Java 代码的方式相同。在编写新应用程序时，Groovy 代码能够与 Java 代码很好地结合，也能用于扩展现有代码。<br>Groovy 与 Java 语言的区别很大，Java 语言是一种固定类型语言。在 Groovy 中，类型是可选的，所以您不必输入 String myStr = “Hello”; 来声明 String 变量。<br>除此之外，Groovy 代码还能在运行时轻松地改变自己。这实际上意味着，能够在运行时轻松地为对象指定新方法和属性。</p>
 </blockquote>
 <p>也就是说Groovy有自己的语法规则，通过查询Groovy的相关API，发现就执行命令来说Groovy的String对象中有个<code>&quot;command&quot;.execute()</code>可以执行系统命令，也就是说如果我们能找到一个可以控制的String类型的变量，就可以执行任意命令了，很遗憾，如果直接<code>&quot;ipconfig&quot;.execute()</code>这样就触发了Groovy的的黑名单。<br>如果用反射，可以这样<code>this.class.toString().valueOf(&#39;whoami&#39;).execute().getText()</code>，即可完美实现，但是同过查阅<code>valueOf()</code>这个函数，发现只要是String类型的变量即可调用，通过查阅API发现Groovy的<code>dump()</code>函数返回类型是String，所以完美的远程命令执行Exploit就出来了<code>dump().valueOf(&#39;ifconfig&#39;).execute().text</code>。</p>
-<h3 id="参考链接">参考链接</h3><pre><code>[<span class="number">1</span>]<span class="symbol">:</span> <span class="symbol">http:</span>/<span class="regexp">/www.ibm.com/developerworks</span><span class="regexp">/cn/education</span><span class="regexp">/java/j</span>-groovy/j-groovy.html <span class="string">"精通 Groovy"</span>
-[<span class="number">2</span>]<span class="symbol">:http</span><span class="symbol">://zone</span>.wooyun.org/content/<span class="number">18894</span> <span class="string">"Elasticsearch Groovy 脚本动态执行漏洞分析和poc（CVE-2015-1427）"</span>
-</code></pre>
+<h3 id="参考链接">参考链接</h3>
         
         
         <p class="article-more-link">

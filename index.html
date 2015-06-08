@@ -77,68 +77,6 @@
         <header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/06/08/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" title="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread" itemprop="url">org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread</a>
-  </h1>
-  <p class="article-author">By
-       
-		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
-		
-  <p class="article-time">
-    <time datetime="2015-06-08T10:16:09.000Z" itemprop="datePublished"> 发表于 2015-06-08</time>
-    
-  </p>
-</header>
-    <div class="article-content">
-        
-        <p>今天在做一个小项目时用到了hibernate4和spring mvc 4.x，在做整合时一切都比较顺利，但是在测试hibernate插入数据时抛出了个异常<br><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">org<span class="class">.hibernate</span><span class="class">.HibernateException</span>: Could not obtain transaction-synchronized Session <span class="keyword">for</span> current thread</span><br></pre></td></tr></table></figure></p>
-<p>查了相关资料发现是事务配置有问题，我一般比较习惯用声明式注解，所以就用了来配置了，调试了半天还是一样的错<br>误，实在是找不到错误在哪里，最后我用注解的方式开启了事务管理(@EnableTransactionManagement)，一切正常，看来真是事务的问题，实在是不知道哪里错了，就看了下官方的文档，发现这两种开启事务的方式的作用域范围。</p>
-<p>@EnableTransactionManagement 和 tx:annotation-driven只查找在同一个application context中bean上面查找@Transactional，也就是说在采用注解开启事务管理里和Transactional在同一上下文当中，而在xml配置的时候把加载的顺序搞反了，正常的顺序应该是<context:component-scan ..="">扫包完成bean的注册之后，tx:annotation-driven才会在spring注册的bean里面扫描@Transactional注解，而我恰恰把顺序给弄反了。</context:component-scan></p>
-<p>正确地方式应该像这样：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="title">context:annotation-config</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">context:component-scan</span> <span class="attribute">base-package</span>=<span class="value">""</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">tx:annotation-driven</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="参考链接">参考链接</h3><p>  [1] : <a href="http://forum.spring.io/forum/spring-projects/web/80895-why-tx-annotation-driven-doesn-t-work-in-my-service-configuration-file" target="_blank" rel="external">http://forum.spring.io/forum/spring-projects/web/80895-why-tx-annotation-driven-doesn-t-work-in-my-service-configuration-file</a></p>
-
-        
-        
-        <p class="article-more-link">
-          
-       </p>
-    </div>
-    <footer class="article-footer clearfix">
-<div class="article-catetags">
-
-<div class="article-categories">
-  <span></span>
-  <a class="article-category-link" href="/categories/Spring/">Spring</a>
-</div>
-
-
-</div>
-
-
-
-
-<div class="comments-count">
-	
-	  	<span></span>
-		<a href="/2015/06/08/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/#comments" class="ds-thread-count comments-count-link" data-thread-key="2015/06/08/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" data-count-type="comments">&nbsp;</a>
-	
-</div>
-
-</footer>
-
-
-    </article>
-
-
-
-
-
-
-   
-    
-    <article class="post-expand post" itemprop="articleBody"> 
-        <header class="article-info clearfix">
-  <h1 itemprop="name">
-    
       <a href="/2015/03/04/Elasticsearch-Groovy-remote-code-execution/" title="Elasticsearch Groovy 远程代码执行漏洞" itemprop="url">Elasticsearch Groovy 远程代码执行漏洞</a>
   </h1>
   <p class="article-author">By
@@ -180,6 +118,68 @@
 	
 	  	<span></span>
 		<a href="/2015/03/04/Elasticsearch-Groovy-remote-code-execution/#comments" class="ds-thread-count comments-count-link" data-thread-key="2015/03/04/Elasticsearch-Groovy-remote-code-execution/" data-count-type="comments">&nbsp;</a>
+	
+</div>
+
+</footer>
+
+
+    </article>
+
+
+
+
+
+
+   
+    
+    <article class="post-expand post" itemprop="articleBody"> 
+        <header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" title="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread" itemprop="url">org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
+		
+  <p class="article-time">
+    <time datetime="2015-03-04T10:16:09.000Z" itemprop="datePublished"> 发表于 2015-03-04</time>
+    
+  </p>
+</header>
+    <div class="article-content">
+        
+        <p>今天在做一个小项目时用到了hibernate4和spring mvc 4.x，在做整合时一切都比较顺利，但是在测试hibernate插入数据时抛出了个异常<br><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">org<span class="class">.hibernate</span><span class="class">.HibernateException</span>: Could not obtain transaction-synchronized Session <span class="keyword">for</span> current thread</span><br></pre></td></tr></table></figure></p>
+<p>查了相关资料发现是事务配置有问题，我一般比较习惯用声明式注解，所以就用了来配置了，调试了半天还是一样的错<br>误，实在是找不到错误在哪里，最后我用注解的方式开启了事务管理(@EnableTransactionManagement)，一切正常，看来真是事务的问题，实在是不知道哪里错了，就看了下官方的文档，发现这两种开启事务的方式的作用域范围。</p>
+<p>@EnableTransactionManagement 和 tx:annotation-driven只查找在同一个application context中bean上面查找@Transactional，也就是说在采用注解开启事务管理里和Transactional在同一上下文当中，而在xml配置的时候把加载的顺序搞反了，正常的顺序应该是<context:component-scan ..="">扫包完成bean的注册之后，tx:annotation-driven才会在spring注册的bean里面扫描@Transactional注解，而我恰恰把顺序给弄反了。</context:component-scan></p>
+<p>正确地方式应该像这样：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="title">context:annotation-config</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">context:component-scan</span> <span class="attribute">base-package</span>=<span class="value">""</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">tx:annotation-driven</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="参考链接">参考链接</h3><p>  [1] : <a href="http://forum.spring.io/forum/spring-projects/web/80895-why-tx-annotation-driven-doesn-t-work-in-my-service-configuration-file" target="_blank" rel="external">http://forum.spring.io/forum/spring-projects/web/80895-why-tx-annotation-driven-doesn-t-work-in-my-service-configuration-file</a></p>
+
+        
+        
+        <p class="article-more-link">
+          
+       </p>
+    </div>
+    <footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Spring/">Spring</a>
+</div>
+
+
+</div>
+
+
+
+
+<div class="comments-count">
+	
+	  	<span></span>
+		<a href="/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/#comments" class="ds-thread-count comments-count-link" data-thread-key="2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" data-count-type="comments">&nbsp;</a>
 	
 </div>
 

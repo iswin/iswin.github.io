@@ -284,19 +284,17 @@
 <h2 id="步骤">步骤</h2><ol>
 <li>格式化u盘</li>
 <li>在u盘里面新建boot文件夹，解压cdlinux到boot文件夹下 </li>
-<li>在u盘里面的boot文件夹里面新建syslinux文件夹，在该文件夹里面建立syslinux.cfg文件，具体内容如下：</li>
-</ol>
-<pre><code>default CDlinux
-time 60
+<li><p>在u盘里面的boot文件夹里面新建syslinux文件夹，在该文件夹里面建立syslinux.cfg文件，具体内容如下：</p>
+<pre><code class="bash">default CDlinux
+time <span class="number">60</span>
 LABEL CDlinux
-<span class="keyword">SAY</span> Now booting the cdlinux from SYSLINUX...
+SAY Now booting the cdlinux from SYSLINUX...
 KERNEL /boot/CDlinux/bzImage
-APPEND initrd=/boot/CDlinux/initrd quiet CDL_LANG=zh_CN.UTF-8 CDL_AMOUNT=yes
-</code></pre><ol>
-<li>将下载的syslinux.exe放到syslinux文件夹下面，dos下cd到该目录，执行<br><code>syslinux.exe -f -m -a -d /boot/syslinux E:</code></li>
-</ol>
-<p>注意：E是u盘的盘符，根据需要自己改就是了！</p>
-<ol>
+APPEND initrd=/boot/CDlinux/initrd quiet CDL_LANG=zh_CN.UTF-<span class="number">8</span> CDL_AMOUNT=yes
+</code></pre>
+</li>
+<li><p>将下载的syslinux.exe放到syslinux文件夹下面，dos下cd到该目录，执行<br><code>syslinux.exe -f -m -a -d /boot/syslinux E:</code><br>注意：E是u盘的盘符，根据需要自己改就是了！</p>
+</li>
 <li>重启系统，选择从u盘启动，就ok！</li>
 </ol>
 

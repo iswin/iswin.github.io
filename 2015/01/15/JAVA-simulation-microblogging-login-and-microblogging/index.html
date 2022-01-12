@@ -1,0 +1,579 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>JAVA模拟微博登录以及发微博 | 随风&#39;S Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="iswin">
+    
+
+    
+    <meta name="description" content="网上给的登陆新浪微博的例子过程都比较繁琐，抓包发现新浪有个接口只需要两步就可以完成，发出来大家分享下。  12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JAVA模拟微博登录以及发微博">
+<meta property="og:url" content="https://www.iswin.org/2015/01/15/JAVA-simulation-microblogging-login-and-microblogging/index.html">
+<meta property="og:site_name" content="随风&#39;S Blog">
+<meta property="og:description" content="网上给的登陆新浪微博的例子过程都比较繁琐，抓包发现新浪有个接口只需要两步就可以完成，发出来大家分享下。  12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2015-06-07T16:42:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JAVA模拟微博登录以及发微博">
+<meta name="twitter:description" content="网上给的登陆新浪微博的例子过程都比较繁琐，抓包发现新浪有个接口只需要两步就可以完成，发出来大家分享下。  12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455565758596061626364656667686970717273747576777">
+
+    
+    <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/author.jpg" alt="随风&#39;S Blog" title="随风&#39;S Blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="随风&#39;S Blog">随风&#39;S Blog</a></h1>
+				<h2 class="blog-motto">网络安全爱好者</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+						<li><a href="/atom.xml">RSS</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:www.iswin.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/01/15/JAVA-simulation-microblogging-login-and-microblogging/" title="JAVA模拟微博登录以及发微博" itemprop="url">JAVA模拟微博登录以及发微博</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
+		
+  <p class="article-time">
+    <time datetime="2015-01-14T16:28:25.000Z" itemprop="datePublished"> 发表于 2015-01-15</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+			
+		
+		</div>
+		
+		<blockquote>
+<p>网上给的登陆新浪微博的例子过程都比较繁琐，抓包发现新浪有个接口只需要两步就可以完成，发出来大家分享下。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.iswin.weibo;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.BufferedReader;</span><br><span class="line"><span class="keyword">import</span> java.io.DataOutputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.io.InputStreamReader;</span><br><span class="line"><span class="keyword">import</span> java.net.HttpURLConnection;</span><br><span class="line"><span class="keyword">import</span> java.net.MalformedURLException;</span><br><span class="line"><span class="keyword">import</span> java.net.URL;</span><br><span class="line"><span class="keyword">import</span> java.net.URLEncoder;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.apache.commons.codec.binary.Base64;</span><br><span class="line"></span><br><span class="line"><span class="comment">/***</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@blog</span>   http://www.iswin.org</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> iswin</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Main</span> </span>&#123;</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		System.err.println(<span class="string">"开始登陆，获取tiket"</span>);</span><br><span class="line">		<span class="comment">// 设置微博用户名以及密码</span></span><br><span class="line">		String ticket = requestAccessTicket(<span class="string">"weibo@iswin.org"</span>, <span class="string">"123456"</span>);</span><br><span class="line">		<span class="keyword">if</span> (ticket != <span class="string">"false"</span>) &#123;</span><br><span class="line">			System.err.println(<span class="string">"获取成功:"</span> + ticket);</span><br><span class="line">			System.err.println(<span class="string">"开始获取cookies"</span>);</span><br><span class="line">			String cookies = sendGetRequest(ticket, <span class="keyword">null</span>);</span><br><span class="line">			System.err.println(<span class="string">"cookies获取成功:"</span> + cookies);</span><br><span class="line">			System.err.println(<span class="string">"开始发送微博"</span>);</span><br><span class="line">			sendWeiBoMessage(<span class="string">"java robot by iswin"</span>, cookies);</span><br><span class="line">			System.err.println(<span class="string">"发送微博成功"</span>);</span><br><span class="line">		&#125; <span class="keyword">else</span></span><br><span class="line">			System.err.println(<span class="string">"ticket获取失败，请检查用户名或者密码是否正确!"</span>);</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">sendGetRequest</span><span class="params">(String url, String cookies)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> MalformedURLException, IOException </span>&#123;</span><br><span class="line">		HttpURLConnection conn = (HttpURLConnection) <span class="keyword">new</span> URL(url)</span><br><span class="line">				.openConnection();</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Cookie"</span>, cookies);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Referer"</span>,</span><br><span class="line">				<span class="string">"http://login.sina.com.cn/signup/signin.php?entry=sso"</span>);</span><br><span class="line">		conn.setRequestProperty(</span><br><span class="line">				<span class="string">"User-Agent"</span>,</span><br><span class="line">				<span class="string">"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0) Gecko/20100101 Firefox/34.0"</span>);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Content-Type"</span>,</span><br><span class="line">				<span class="string">"application/x-www-form-urlencoded"</span>);</span><br><span class="line">		BufferedReader read = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(</span><br><span class="line">				conn.getInputStream(), <span class="string">"gbk"</span>));</span><br><span class="line">		String line = <span class="keyword">null</span>;</span><br><span class="line">		StringBuilder ret = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">		<span class="keyword">while</span> ((line = read.readLine()) != <span class="keyword">null</span>) &#123;</span><br><span class="line">			ret.append(line).append(<span class="string">"\n"</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		StringBuilder ck = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			<span class="keyword">for</span> (String s : conn.getHeaderFields().get(<span class="string">"Set-Cookie"</span>)) &#123;</span><br><span class="line">				ck.append(s.split(<span class="string">";"</span>)[<span class="number">0</span>]).append(<span class="string">";"</span>);</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> ck.toString();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">requestAccessTicket</span><span class="params">(String username, String password)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> MalformedURLException, IOException </span>&#123;</span><br><span class="line">		username = Base64.encodeBase64String(username.replace(<span class="string">"@"</span>, <span class="string">"%40"</span>)</span><br><span class="line">				.getBytes());</span><br><span class="line">		HttpURLConnection conn = (HttpURLConnection) <span class="keyword">new</span> URL(</span><br><span class="line">				<span class="string">"https://login.sina.com.cn/sso/login.php?client=ssologin.js(v1.4.15)"</span>)</span><br><span class="line">				.openConnection();</span><br><span class="line">		conn.setDoInput(<span class="keyword">true</span>);</span><br><span class="line">		conn.setDoOutput(<span class="keyword">true</span>);</span><br><span class="line">		conn.setRequestMethod(<span class="string">"POST"</span>);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Referer"</span>,</span><br><span class="line">				<span class="string">"http://login.sina.com.cn/signup/signin.php?entry=sso"</span>);</span><br><span class="line">		conn.setRequestProperty(</span><br><span class="line">				<span class="string">"User-Agent"</span>,</span><br><span class="line">				<span class="string">"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0) Gecko/20100101 Firefox/34.0"</span>);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Content-Type"</span>,</span><br><span class="line">				<span class="string">"application/x-www-form-urlencoded"</span>);</span><br><span class="line">		DataOutputStream out = <span class="keyword">new</span> DataOutputStream(conn.getOutputStream());</span><br><span class="line">		out.writeBytes(String</span><br><span class="line">				.format(<span class="string">"entry=sso&amp;gateway=1&amp;from=null&amp;savestate=30&amp;useticket=0&amp;pagerefer=&amp;vsnf=1&amp;su=%s&amp;service=sso&amp;sp=%s&amp;sr=1280*800&amp;encoding=UTF-8&amp;cdult=3&amp;domain=sina.com.cn&amp;prelt=0&amp;returntype=TEXT"</span>,</span><br><span class="line">						URLEncoder.encode(username), password));</span><br><span class="line">		out.flush();</span><br><span class="line">		out.close();</span><br><span class="line">		BufferedReader read = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(</span><br><span class="line">				conn.getInputStream(), <span class="string">"gbk"</span>));</span><br><span class="line">		String line = <span class="keyword">null</span>;</span><br><span class="line">		StringBuilder ret = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">		<span class="keyword">while</span> ((line = read.readLine()) != <span class="keyword">null</span>) &#123;</span><br><span class="line">			ret.append(line).append(<span class="string">"\n"</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		String res = <span class="keyword">null</span>;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			res = ret.substring(ret.indexOf(<span class="string">"https:"</span>),</span><br><span class="line">					ret.indexOf(<span class="string">",\"https:"</span>) - <span class="number">1</span>).replace(<span class="string">"\\"</span>, <span class="string">""</span>);</span><br><span class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">			res = <span class="string">"false"</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> res;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@SuppressWarnings</span>(<span class="string">"deprecation"</span>)</span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">sendWeiBoMessage</span><span class="params">(String message, String cookies)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> MalformedURLException, IOException </span>&#123;</span><br><span class="line">		HttpURLConnection conn = (HttpURLConnection) <span class="keyword">new</span> URL(</span><br><span class="line">				<span class="string">"http://www.weibo.com/aj/mblog/add?ajwvr=6"</span>).openConnection();</span><br><span class="line">		conn.setDoInput(<span class="keyword">true</span>);</span><br><span class="line">		conn.setDoOutput(<span class="keyword">true</span>);</span><br><span class="line">		conn.setRequestMethod(<span class="string">"POST"</span>);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Cookie"</span>, cookies);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Referer"</span>,</span><br><span class="line">				<span class="string">"http://www.weibo.com/u/2955825224/home?topnav=1&amp;wvr=6"</span>);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"X-Requested-With"</span>, <span class="string">"XMLHttpRequest"</span>);</span><br><span class="line">		conn.setRequestProperty(</span><br><span class="line">				<span class="string">"User-Agent"</span>,</span><br><span class="line">				<span class="string">"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:34.0) Gecko/20100101 Firefox/34.0"</span>);</span><br><span class="line">		conn.setRequestProperty(<span class="string">"Content-Type"</span>,</span><br><span class="line">				<span class="string">"application/x-www-form-urlencoded"</span>);</span><br><span class="line">		DataOutputStream out = <span class="keyword">new</span> DataOutputStream(conn.getOutputStream());</span><br><span class="line">		out.writeBytes(<span class="string">"location=v6_content_home&amp;appkey=&amp;style_type=1&amp;pic_id=&amp;text="</span></span><br><span class="line">				+ URLEncoder.encode(message)</span><br><span class="line">				+ <span class="string">"&amp;pdetail=&amp;rank=0&amp;rankid=&amp;module=stissue&amp;pub_type=dialog&amp;_t=0"</span>);</span><br><span class="line">		out.flush();</span><br><span class="line">		out.close();</span><br><span class="line">		BufferedReader read = <span class="keyword">new</span> BufferedReader(<span class="keyword">new</span> InputStreamReader(</span><br><span class="line">				conn.getInputStream(), <span class="string">"gbk"</span>));</span><br><span class="line">		String line = <span class="keyword">null</span>;</span><br><span class="line">		StringBuilder ret = <span class="keyword">new</span> StringBuilder();</span><br><span class="line">		<span class="keyword">while</span> ((line = read.readLine()) != <span class="keyword">null</span>) &#123;</span><br><span class="line">			ret.append(line).append(<span class="string">"\n"</span>);</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> ret.toString();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/JAVA/">JAVA</a>
+</div>
+
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://www.iswin.org/2015/01/15/JAVA-simulation-microblogging-login-and-microblogging/" data-title="JAVA模拟微博登录以及发微博 | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/03/04/org-hibernate-HibernateException-Could-not-obtain-transaction-synchronized-Session-for-current-thread/" title="org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread">
+  <strong>上一篇：</strong><br/>
+  <span>
+  org.hibernate.HibernateException: Could not obtain transaction-synchronized Session for current thread</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2014/11/29/U-Dish-Cdlinux-boot/"  title="Cdlinux U盘启动">
+ <strong>下一篇：</strong><br/> 
+ <span>Cdlinux U盘启动
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ 
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/" title="Python">Python<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Deserialize/" title="Deserialize">Deserialize<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/RCE/" title="RCE">RCE<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Scikit-Learn/" title="Scikit-Learn">Scikit-Learn<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Pybrain/" title="Pybrain">Pybrain<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Cdlinux/" title="Cdlinux">Cdlinux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://p2j.cn" target="_blank" title="园长博客">园长博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.shack2.org" target="_blank" title="Shack2博客">Shack2博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.cnseay.com" target="_blank" title="Seay博客">Seay博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.z7ys.com" target="_blank" title="z7y博客">z7y博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bluereader.org" target="_blank" title="深蓝阅读">深蓝阅读</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.untnt.com" target="_blank" title="TNT博客">TNT博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.03sec.com/" target="_blank" title="Sky博客">Sky博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jxcm.net/" target="_blank" title="DCC博客">DCC博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://cnbraid.com" target="_blank" title="Braid&#39;s Blog">Braid&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.xiyv.net" target="_blank" title="wolf&#39;s blog">wolf&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.blackh4t.org" target="_blank" title="DarkRay&#39;s BLoG">DarkRay&#39;s BLoG</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.00theway.org" target="_blank" title="00theway&#39;s Blog">00theway&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bksec.net/" target="_blank" title="my5t3ry&#39;s Blog">my5t3ry&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.00day.com/" target="_blank" title="Luoye&#39;s blog">Luoye&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.imbeee.com" target="_blank" title="Beeeの零碎事">Beeeの零碎事</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> 当才华还撑不起野心时，那就应该静下心来学习。 <br/>
+			当能力还驾奴不了目标时，就应该沉下心来历练。</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
+		Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a>
+		
+		<a href="/about" target="_blank" title="iswin">iswin</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#nothing"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

@@ -1,0 +1,598 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>Druid数据连接池字符串解密 | 随风&#39;S Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="iswin">
+    
+
+    
+    <meta name="description" content="Driud是什么 Druid是阿里巴巴开源平台上的一个项目，整个项目由数据库连接池、插件框架和SQL解析器组成。该项目主要是为了扩展JDBC的一些限制，可以让程序员实现一些特殊的需求，比如向密钥服务请求凭证、统计SQL信息、SQL性能收集、SQL注入检查、SQL翻译等，程序员可以通过定制来实现自己需要的功能。  Druid解密方式Druid数据库加密算法采用的是RSA非对称加解密，并且秘钥的配置支">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Druid数据连接池字符串解密">
+<meta property="og:url" content="https://www.iswin.org/2015/09/21/Druid-DataSource-ConnectString-Decrypt/index.html">
+<meta property="og:site_name" content="随风&#39;S Blog">
+<meta property="og:description" content="Driud是什么 Druid是阿里巴巴开源平台上的一个项目，整个项目由数据库连接池、插件框架和SQL解析器组成。该项目主要是为了扩展JDBC的一些限制，可以让程序员实现一些特殊的需求，比如向密钥服务请求凭证、统计SQL信息、SQL性能收集、SQL注入检查、SQL翻译等，程序员可以通过定制来实现自己需要的功能。  Druid解密方式Druid数据库加密算法采用的是RSA非对称加解密，并且秘钥的配置支">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2017-01-23T17:22:59.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Druid数据连接池字符串解密">
+<meta name="twitter:description" content="Driud是什么 Druid是阿里巴巴开源平台上的一个项目，整个项目由数据库连接池、插件框架和SQL解析器组成。该项目主要是为了扩展JDBC的一些限制，可以让程序员实现一些特殊的需求，比如向密钥服务请求凭证、统计SQL信息、SQL性能收集、SQL注入检查、SQL翻译等，程序员可以通过定制来实现自己需要的功能。  Druid解密方式Druid数据库加密算法采用的是RSA非对称加解密，并且秘钥的配置支">
+
+    
+    <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/author.jpg" alt="随风&#39;S Blog" title="随风&#39;S Blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="随风&#39;S Blog">随风&#39;S Blog</a></h1>
+				<h2 class="blog-motto">网络安全爱好者</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+						<li><a href="/atom.xml">RSS</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:www.iswin.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/09/21/Druid-DataSource-ConnectString-Decrypt/" title="Druid数据连接池字符串解密" itemprop="url">Druid数据连接池字符串解密</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
+		
+  <p class="article-time">
+    <time datetime="2015-09-21T13:31:50.000Z" itemprop="datePublished"> 发表于 2015-09-21</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Driud是什么"><span class="toc-number">1.</span> <span class="toc-text">Driud是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Druid解密方式"><span class="toc-number">2.</span> <span class="toc-text">Druid解密方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#远程加载"><span class="toc-number">2.1.</span> <span class="toc-text">远程加载</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#系统属性中获取秘钥"><span class="toc-number">2.2.</span> <span class="toc-text">系统属性中获取秘钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#默认秘钥"><span class="toc-number">2.3.</span> <span class="toc-text">默认秘钥</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#解密"><span class="toc-number">3.</span> <span class="toc-text">解密</span></a></li></ol>
+		
+		</div>
+		
+		<h3 id="Driud是什么"><a href="#Driud是什么" class="headerlink" title="Driud是什么"></a>Driud是什么</h3><blockquote>
+<p>Druid是阿里巴巴开源平台上的一个项目，整个项目由数据库连接池、插件框架和SQL解析器组成。该项目主要是为了扩展JDBC的一些限制，可以让程序员实现一些特殊的需求，比如向密钥服务请求凭证、统计SQL信息、SQL性能收集、SQL注入检查、SQL翻译等，程序员可以通过定制来实现自己需要的功能。</p>
+</blockquote>
+<h3 id="Druid解密方式"><a href="#Druid解密方式" class="headerlink" title="Druid解密方式"></a>Druid解密方式</h3><p>Druid数据库加密算法采用的是RSA非对称加解密，并且秘钥的配置支持多种方式：</p>
+<ul>
+<li>远程加载秘钥文件</li>
+<li>读取本地秘钥文件</li>
+<li>使用系统属性加载秘钥</li>
+<li>使用默认秘钥加解密</li>
+</ul>
+<h4 id="远程加载"><a href="#远程加载" class="headerlink" title="远程加载"></a>远程加载</h4><p>在Spring中配置像这样：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;bean id=<span class="string">"dataSource"</span> <span class="class"><span class="keyword">class</span></span>=<span class="string">"com.alibaba.druid.pool.DruidDataSource"</span> init-method=<span class="string">"init"</span> destroy-method=<span class="string">"close"</span>&gt;</span><br><span class="line">      &lt;property name=<span class="string">"filters"</span> value=<span class="string">"config"</span> /&gt;</span><br><span class="line">      &lt;property name=<span class="string">"connectionProperties"</span> value=<span class="string">"config.file=http://remote:8080/remote.propreties; /&gt;</span></span><br><span class="line"><span class="string"> &lt;/bean&gt;</span></span><br></pre></td></tr></table></figure>
+<p>从远程服务器中加载包含秘钥的remote.propreties</p>
+<p>####读取本地秘钥<br>读取本地配置文件</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;bean id=<span class="string">"dataSource"</span> <span class="class"><span class="keyword">class</span></span>=<span class="string">"com.alibaba.druid.pool.DruidDataSource"</span></span><br><span class="line">      init-method=<span class="string">"init"</span> destroy-method=<span class="string">"close"</span>&gt;</span><br><span class="line">      &lt;property name=<span class="string">"filters"</span> value=<span class="string">"config"</span> /&gt;</span><br><span class="line">      &lt;property name=<span class="string">"connectionProperties"</span> value=<span class="string">"config.file=file:///home/admin/druid-pool.properties"</span> /&gt;</span><br><span class="line">  &lt;/bean&gt;</span><br></pre></td></tr></table></figure>
+<h4 id="系统属性中获取秘钥"><a href="#系统属性中获取秘钥" class="headerlink" title="系统属性中获取秘钥"></a>系统属性中获取秘钥</h4><p>获取解密的代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String SYS_PROP_CONFIG_KEY     = <span class="string">"druid.config.decrypt.key"</span>;</span><br><span class="line">key = System.getProperty(SYS_PROP_CONFIG_KEY);</span><br></pre></td></tr></table></figure>
+<p>如果前两种方式都未能找到解密的KEY，那么会在java系统熟悉中去获取秘钥。</p>
+<h4 id="默认秘钥"><a href="#默认秘钥" class="headerlink" title="默认秘钥"></a>默认秘钥</h4><p>如果上述所有方法都无法获取秘钥，那么程序将使用默认秘钥去加解密。</p>
+<h3 id="解密"><a href="#解密" class="headerlink" title="解密"></a>解密</h3><p>找到秘钥后就可以使用下列代码进行解密，不过大多数开发都是采用默认秘钥去加密字符串，实质上并没有什么卵用。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.iswin.csv;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> java.io.ByteArrayOutputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.FileInputStream;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.security.InvalidKeyException;</span><br><span class="line"><span class="keyword">import</span> java.security.Key;</span><br><span class="line"><span class="keyword">import</span> java.security.KeyFactory;</span><br><span class="line"><span class="keyword">import</span> java.security.KeyPair;</span><br><span class="line"><span class="keyword">import</span> java.security.KeyPairGenerator;</span><br><span class="line"><span class="keyword">import</span> java.security.NoSuchAlgorithmException;</span><br><span class="line"><span class="keyword">import</span> java.security.PrivateKey;</span><br><span class="line"><span class="keyword">import</span> java.security.PublicKey;</span><br><span class="line"><span class="keyword">import</span> java.security.SecureRandom;</span><br><span class="line"><span class="keyword">import</span> java.security.cert.Certificate;</span><br><span class="line"><span class="keyword">import</span> java.security.cert.CertificateFactory;</span><br><span class="line"><span class="keyword">import</span> java.security.interfaces.RSAPrivateKey;</span><br><span class="line"><span class="keyword">import</span> java.security.interfaces.RSAPublicKey;</span><br><span class="line"><span class="keyword">import</span> java.security.spec.PKCS8EncodedKeySpec;</span><br><span class="line"><span class="keyword">import</span> java.security.spec.RSAPrivateKeySpec;</span><br><span class="line"><span class="keyword">import</span> java.security.spec.RSAPublicKeySpec;</span><br><span class="line"><span class="keyword">import</span> java.security.spec.X509EncodedKeySpec;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> javax.crypto.Cipher;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ConfigTools</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT_PRIVATE_KEY_STRING = <span class="string">"MIIBVAIBADANBgkqhkiG9w0BAQEFAASCAT4wggE6AgEAAkEAocbCrurZGbC5GArEHKlAfDSZi7gFBnd4yxOt0rwTqKBFzGyhtQLu5PRKjEiOXVa95aeIIBJ6OhC2f8FjqFUpawIDAQABAkAPejKaBYHrwUqUEEOe8lpnB6lBAsQIUFnQI/vXU4MV+MhIzW0BLVZCiarIQqUXeOhThVWXKFt8GxCykrrUsQ6BAiEA4vMVxEHBovz1di3aozzFvSMdsjTcYRRo82hS5Ru2/OECIQC2fAPoXixVTVY7bNMeuxCP4954ZkXp7fEPDINCjcQDywIgcc8XLkkPcs3Jxk7uYofaXaPbg39wuJpEmzPIxi3k0OECIGubmdpOnin3HuCP/bbjbJLNNoUdGiEmFL5hDI4UdwAdAiEAtcAwbm08bKN7pwwvyqaCBC//VnEWaq39DCzxr+Z2EIk="</span>;</span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> String DEFAULT_PUBLIC_KEY_STRING = <span class="string">"MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKHGwq7q2RmwuRgKxBypQHw0mYu4BQZ3eMsTrdK8E6igRcxsobUC7uT0SoxIjl1WveWniCASejoQtn/BY6hVKWsCAwEAAQ=="</span>;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		System.out.println(decrypt(<span class="string">"MIqXaohFx7rvzJv5ZAb6ZvPPFDFMxL50yiAhks2Qg9822gi/X4to4UHJb10zCIN89B0n95nZWJTYtJ2SmZ0RTQ=="</span>));</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">decrypt</span><span class="params">(String cipherText)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> decrypt((String) <span class="keyword">null</span>, cipherText);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">decrypt</span><span class="params">(String publicKeyText, String cipherText)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		PublicKey publicKey = getPublicKey(publicKeyText);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> decrypt(publicKey, cipherText);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> PublicKey <span class="title">getPublicKeyByX509</span><span class="params">(String x509File)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (x509File == <span class="keyword">null</span> || x509File.length() == <span class="number">0</span>) &#123;</span><br><span class="line">			<span class="keyword">return</span> ConfigTools.getPublicKey(<span class="keyword">null</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		FileInputStream in = <span class="keyword">null</span>;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			in = <span class="keyword">new</span> FileInputStream(x509File);</span><br><span class="line"></span><br><span class="line">			CertificateFactory factory = CertificateFactory</span><br><span class="line">					.getInstance(<span class="string">"X.509"</span>);</span><br><span class="line">			Certificate cer = factory.generateCertificate(in);</span><br><span class="line">			<span class="keyword">return</span> cer.getPublicKey();</span><br><span class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Failed to get public key"</span>, e);</span><br><span class="line">		&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				in.close();</span><br><span class="line">			&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">				e.printStackTrace();</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> PublicKey <span class="title">getPublicKey</span><span class="params">(String publicKeyText)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (publicKeyText == <span class="keyword">null</span> || publicKeyText.length() == <span class="number">0</span>) &#123;</span><br><span class="line">			publicKeyText = ConfigTools.DEFAULT_PUBLIC_KEY_STRING;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			<span class="keyword">byte</span>[] publicKeyBytes = Base64.base64ToByteArray(publicKeyText);</span><br><span class="line">			X509EncodedKeySpec x509KeySpec = <span class="keyword">new</span> X509EncodedKeySpec(</span><br><span class="line">					publicKeyBytes);</span><br><span class="line"></span><br><span class="line">			KeyFactory keyFactory = KeyFactory.getInstance(<span class="string">"RSA"</span>);</span><br><span class="line">			<span class="keyword">return</span> keyFactory.generatePublic(x509KeySpec);</span><br><span class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Failed to get public key"</span>, e);</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> PublicKey <span class="title">getPublicKeyByPublicKeyFile</span><span class="params">(String publicKeyFile)</span> </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (publicKeyFile == <span class="keyword">null</span> || publicKeyFile.length() == <span class="number">0</span>) &#123;</span><br><span class="line">			<span class="keyword">return</span> ConfigTools.getPublicKey(<span class="keyword">null</span>);</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		FileInputStream in = <span class="keyword">null</span>;</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			in = <span class="keyword">new</span> FileInputStream(publicKeyFile);</span><br><span class="line">			ByteArrayOutputStream out = <span class="keyword">new</span> ByteArrayOutputStream();</span><br><span class="line">			<span class="keyword">int</span> len = <span class="number">0</span>;</span><br><span class="line">			<span class="keyword">byte</span>[] b = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">512</span> / <span class="number">8</span>];</span><br><span class="line">			<span class="keyword">while</span> ((len = in.read(b)) != -<span class="number">1</span>) &#123;</span><br><span class="line">				out.write(b, <span class="number">0</span>, len);</span><br><span class="line">			&#125;</span><br><span class="line"></span><br><span class="line">			<span class="keyword">byte</span>[] publicKeyBytes = out.toByteArray();</span><br><span class="line">			X509EncodedKeySpec spec = <span class="keyword">new</span> X509EncodedKeySpec(publicKeyBytes);</span><br><span class="line">			KeyFactory factory = KeyFactory.getInstance(<span class="string">"RSA"</span>);</span><br><span class="line">			<span class="keyword">return</span> factory.generatePublic(spec);</span><br><span class="line">		&#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">			<span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Failed to get public key"</span>, e);</span><br><span class="line">		&#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">			<span class="keyword">try</span> &#123;</span><br><span class="line">				in.close();</span><br><span class="line">			&#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">				e.printStackTrace();</span><br><span class="line">			&#125;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">decrypt</span><span class="params">(PublicKey publicKey, String cipherText)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		Cipher cipher = Cipher.getInstance(<span class="string">"RSA"</span>);</span><br><span class="line">		<span class="keyword">try</span> &#123;</span><br><span class="line">			cipher.init(Cipher.DECRYPT_MODE, publicKey);</span><br><span class="line">		&#125; <span class="keyword">catch</span> (InvalidKeyException e) &#123;</span><br><span class="line">            <span class="comment">// 因为 IBM JDK 不支持私钥加密, 公钥解密, 所以要反转公私钥</span></span><br><span class="line">            <span class="comment">// 也就是说对于解密, 可以通过公钥的参数伪造一个私钥对象欺骗 IBM JDK</span></span><br><span class="line">            RSAPublicKey rsaPublicKey = (RSAPublicKey) publicKey;</span><br><span class="line">            RSAPrivateKeySpec spec = <span class="keyword">new</span> RSAPrivateKeySpec(rsaPublicKey.getModulus(), rsaPublicKey.getPublicExponent());</span><br><span class="line">            Key fakePrivateKey = KeyFactory.getInstance(<span class="string">"RSA"</span>).generatePrivate(spec);</span><br><span class="line">            cipher = Cipher.getInstance(<span class="string">"RSA"</span>); <span class="comment">//It is a stateful object. so we need to get new one.</span></span><br><span class="line">            cipher.init(Cipher.DECRYPT_MODE, fakePrivateKey);</span><br><span class="line">		&#125;</span><br><span class="line">		</span><br><span class="line">		<span class="keyword">if</span> (cipherText == <span class="keyword">null</span> || cipherText.length() == <span class="number">0</span>) &#123;</span><br><span class="line">			<span class="keyword">return</span> cipherText;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">byte</span>[] cipherBytes = Base64.base64ToByteArray(cipherText);</span><br><span class="line">		<span class="keyword">byte</span>[] plainBytes = cipher.doFinal(cipherBytes);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> <span class="keyword">new</span> String(plainBytes);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">encrypt</span><span class="params">(String plainText)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> encrypt((String) <span class="keyword">null</span>, plainText);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">encrypt</span><span class="params">(String key, String plainText)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		<span class="keyword">if</span> (key == <span class="keyword">null</span>) &#123;</span><br><span class="line">			key = DEFAULT_PRIVATE_KEY_STRING;</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">byte</span>[] keyBytes = Base64.base64ToByteArray(key);</span><br><span class="line">		<span class="keyword">return</span> encrypt(keyBytes, plainText);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">encrypt</span><span class="params">(<span class="keyword">byte</span>[] keyBytes, String plainText)</span></span></span><br><span class="line"><span class="function">			<span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">		PKCS8EncodedKeySpec spec = <span class="keyword">new</span> PKCS8EncodedKeySpec(keyBytes);</span><br><span class="line">		KeyFactory factory = KeyFactory.getInstance(<span class="string">"RSA"</span>);</span><br><span class="line">		PrivateKey privateKey = factory.generatePrivate(spec);</span><br><span class="line">		Cipher cipher = Cipher.getInstance(<span class="string">"RSA"</span>);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">		    cipher.init(Cipher.ENCRYPT_MODE, privateKey);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InvalidKeyException e) &#123;</span><br><span class="line">            <span class="comment">//For IBM JDK, 原因请看解密方法中的说明</span></span><br><span class="line">            RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) privateKey;</span><br><span class="line">            RSAPublicKeySpec publicKeySpec = <span class="keyword">new</span> RSAPublicKeySpec(rsaPrivateKey.getModulus(), rsaPrivateKey.getPrivateExponent());</span><br><span class="line">            Key fakePublicKey = KeyFactory.getInstance(<span class="string">"RSA"</span>).generatePublic(publicKeySpec);</span><br><span class="line">            cipher = Cipher.getInstance(<span class="string">"RSA"</span>);</span><br><span class="line">            cipher.init(Cipher.ENCRYPT_MODE, fakePublicKey);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">byte</span>[] encryptedBytes = cipher.doFinal(plainText.getBytes(<span class="string">"UTF-8"</span>));</span><br><span class="line">		String encryptedString = Base64.byteArrayToBase64(encryptedBytes);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> encryptedString;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span>[][] genKeyPairBytes(<span class="keyword">int</span> keySize)</span><br><span class="line">			<span class="keyword">throws</span> NoSuchAlgorithmException &#123;</span><br><span class="line">		<span class="keyword">byte</span>[][] keyPairBytes = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">2</span>][];</span><br><span class="line"></span><br><span class="line">		KeyPairGenerator gen = KeyPairGenerator.getInstance(<span class="string">"RSA"</span>);</span><br><span class="line">		gen.initialize(keySize, <span class="keyword">new</span> SecureRandom());</span><br><span class="line">		KeyPair pair = gen.generateKeyPair();</span><br><span class="line"></span><br><span class="line">		keyPairBytes[<span class="number">0</span>] = pair.getPrivate().getEncoded();</span><br><span class="line">		keyPairBytes[<span class="number">1</span>] = pair.getPublic().getEncoded();</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> keyPairBytes;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">public</span> <span class="keyword">static</span> String[] genKeyPair(<span class="keyword">int</span> keySize)</span><br><span class="line">			<span class="keyword">throws</span> NoSuchAlgorithmException &#123;</span><br><span class="line">		<span class="keyword">byte</span>[][] keyPairBytes = genKeyPairBytes(keySize);</span><br><span class="line">		String[] keyPairs = <span class="keyword">new</span> String[<span class="number">2</span>];</span><br><span class="line"></span><br><span class="line">		keyPairs[<span class="number">0</span>] = Base64.byteArrayToBase64(keyPairBytes[<span class="number">0</span>]);</span><br><span class="line">		keyPairs[<span class="number">1</span>] = Base64.byteArrayToBase64(keyPairBytes[<span class="number">1</span>]);</span><br><span class="line"></span><br><span class="line">		<span class="keyword">return</span> keyPairs;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>BASE64工具</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.iswin.csv;</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Static methods for translating Base64 encoded strings to byte arrays and vice-versa.</span></span><br><span class="line"><span class="comment"> * </span></span><br><span class="line"><span class="comment"> * <span class="doctag">@author</span> Josh Bloch</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@version</span> %I%, %G%</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@see</span> Preferences</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@since</span> 1.4</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Base64</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Translates the specified byte array into a Base64 string as per Preferences.put(byte[]).</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">byteArrayToBase64</span><span class="params">(<span class="keyword">byte</span>[] a)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> byteArrayToBase64(a, <span class="keyword">false</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Translates the specified byte array into an "alternate representation" Base64 string. This non-standard variant</span></span><br><span class="line"><span class="comment">     * uses an alphabet that does not contain the uppercase alphabetic characters, which makes it suitable for use in</span></span><br><span class="line"><span class="comment">     * situations where case-folding occurs.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">byteArrayToAltBase64</span><span class="params">(<span class="keyword">byte</span>[] a)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> byteArrayToBase64(a, <span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> String <span class="title">byteArrayToBase64</span><span class="params">(<span class="keyword">byte</span>[] a, <span class="keyword">boolean</span> alternate)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> aLen = a.length;</span><br><span class="line">        <span class="keyword">int</span> numFullGroups = aLen / <span class="number">3</span>;</span><br><span class="line">        <span class="keyword">int</span> numBytesInPartialGroup = aLen - <span class="number">3</span> * numFullGroups;</span><br><span class="line">        <span class="keyword">int</span> resultLen = <span class="number">4</span> * ((aLen + <span class="number">2</span>) / <span class="number">3</span>);</span><br><span class="line">        StringBuilder result = <span class="keyword">new</span> StringBuilder(resultLen);</span><br><span class="line">        <span class="keyword">char</span>[] intToAlpha = (alternate ? intToAltBase64 : intToBase64);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Translate all full groups from byte array elements to Base64</span></span><br><span class="line">        <span class="keyword">int</span> inCursor = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numFullGroups; i++) &#123;</span><br><span class="line">            <span class="keyword">int</span> byte0 = a[inCursor++] &amp; <span class="number">0xff</span>;</span><br><span class="line">            <span class="keyword">int</span> byte1 = a[inCursor++] &amp; <span class="number">0xff</span>;</span><br><span class="line">            <span class="keyword">int</span> byte2 = a[inCursor++] &amp; <span class="number">0xff</span>;</span><br><span class="line">            result.append(intToAlpha[byte0 &gt;&gt; <span class="number">2</span>]);</span><br><span class="line">            result.append(intToAlpha[(byte0 &lt;&lt; <span class="number">4</span>) &amp; <span class="number">0x3f</span> | (byte1 &gt;&gt; <span class="number">4</span>)]);</span><br><span class="line">            result.append(intToAlpha[(byte1 &lt;&lt; <span class="number">2</span>) &amp; <span class="number">0x3f</span> | (byte2 &gt;&gt; <span class="number">6</span>)]);</span><br><span class="line">            result.append(intToAlpha[byte2 &amp; <span class="number">0x3f</span>]);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Translate partial group if present</span></span><br><span class="line">        <span class="keyword">if</span> (numBytesInPartialGroup != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">int</span> byte0 = a[inCursor++] &amp; <span class="number">0xff</span>;</span><br><span class="line">            result.append(intToAlpha[byte0 &gt;&gt; <span class="number">2</span>]);</span><br><span class="line">            <span class="keyword">if</span> (numBytesInPartialGroup == <span class="number">1</span>) &#123;</span><br><span class="line">                result.append(intToAlpha[(byte0 &lt;&lt; <span class="number">4</span>) &amp; <span class="number">0x3f</span>]);</span><br><span class="line">                result.append(<span class="string">"=="</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// assert numBytesInPartialGroup == 2;</span></span><br><span class="line">                <span class="keyword">int</span> byte1 = a[inCursor++] &amp; <span class="number">0xff</span>;</span><br><span class="line">                result.append(intToAlpha[(byte0 &lt;&lt; <span class="number">4</span>) &amp; <span class="number">0x3f</span> | (byte1 &gt;&gt; <span class="number">4</span>)]);</span><br><span class="line">                result.append(intToAlpha[(byte1 &lt;&lt; <span class="number">2</span>) &amp; <span class="number">0x3f</span>]);</span><br><span class="line">                result.append(<span class="string">'='</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// assert inCursor == a.length;</span></span><br><span class="line">        <span class="comment">// assert result.length() == resultLen;</span></span><br><span class="line">        <span class="keyword">return</span> result.toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * This array is a lookup table that translates 6-bit positive integer index values into their "Base64 Alphabet"</span></span><br><span class="line"><span class="comment">     * equivalents as specified in Table 1 of RFC 2045.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">char</span> intToBase64[]    = &#123; <span class="string">'A'</span>, <span class="string">'B'</span>, <span class="string">'C'</span>, <span class="string">'D'</span>, <span class="string">'E'</span>, <span class="string">'F'</span>, <span class="string">'G'</span>, <span class="string">'H'</span>, <span class="string">'I'</span>, <span class="string">'J'</span>, <span class="string">'K'</span>, <span class="string">'L'</span>, <span class="string">'M'</span>,</span><br><span class="line">            <span class="string">'N'</span>, <span class="string">'O'</span>, <span class="string">'P'</span>, <span class="string">'Q'</span>, <span class="string">'R'</span>, <span class="string">'S'</span>, <span class="string">'T'</span>, <span class="string">'U'</span>, <span class="string">'V'</span>, <span class="string">'W'</span>, <span class="string">'X'</span>, <span class="string">'Y'</span>, <span class="string">'Z'</span>, <span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'c'</span>, <span class="string">'d'</span>, <span class="string">'e'</span>, <span class="string">'f'</span>, <span class="string">'g'</span>, <span class="string">'h'</span>,</span><br><span class="line">            <span class="string">'i'</span>, <span class="string">'j'</span>, <span class="string">'k'</span>, <span class="string">'l'</span>, <span class="string">'m'</span>, <span class="string">'n'</span>, <span class="string">'o'</span>, <span class="string">'p'</span>, <span class="string">'q'</span>, <span class="string">'r'</span>, <span class="string">'s'</span>, <span class="string">'t'</span>, <span class="string">'u'</span>, <span class="string">'v'</span>, <span class="string">'w'</span>, <span class="string">'x'</span>, <span class="string">'y'</span>, <span class="string">'z'</span>, <span class="string">'0'</span>, <span class="string">'1'</span>, <span class="string">'2'</span>,</span><br><span class="line">            <span class="string">'3'</span>, <span class="string">'4'</span>, <span class="string">'5'</span>, <span class="string">'6'</span>, <span class="string">'7'</span>, <span class="string">'8'</span>, <span class="string">'9'</span>, <span class="string">'+'</span>, <span class="string">'/'</span> &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * This array is a lookup table that translates 6-bit positive integer index values into their</span></span><br><span class="line"><span class="comment">     * "Alternate Base64 Alphabet" equivalents. This is NOT the real Base64 Alphabet as per in Table 1 of RFC 2045. This</span></span><br><span class="line"><span class="comment">     * alternate alphabet does not use the capital letters. It is designed for use in environments where "case folding"</span></span><br><span class="line"><span class="comment">     * occurs.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">char</span> intToAltBase64[] = &#123; <span class="string">'!'</span>, <span class="string">'"'</span>, <span class="string">'#'</span>, <span class="string">'$'</span>, <span class="string">'%'</span>, <span class="string">'&amp;'</span>, <span class="string">'\''</span>, <span class="string">'('</span>, <span class="string">')'</span>, <span class="string">','</span>, <span class="string">'-'</span>, <span class="string">'.'</span>, <span class="string">':'</span>,</span><br><span class="line">            <span class="string">';'</span>, <span class="string">'&lt;'</span>, <span class="string">'&gt;'</span>, <span class="string">'@'</span>, <span class="string">'['</span>, <span class="string">']'</span>, <span class="string">'^'</span>, <span class="string">'`'</span>, <span class="string">'_'</span>, <span class="string">'&#123;'</span>, <span class="string">'|'</span>, <span class="string">'&#125;'</span>, <span class="string">'~'</span>, <span class="string">'a'</span>, <span class="string">'b'</span>, <span class="string">'c'</span>, <span class="string">'d'</span>, <span class="string">'e'</span>, <span class="string">'f'</span>, <span class="string">'g'</span>, <span class="string">'h'</span>,</span><br><span class="line">            <span class="string">'i'</span>, <span class="string">'j'</span>, <span class="string">'k'</span>, <span class="string">'l'</span>, <span class="string">'m'</span>, <span class="string">'n'</span>, <span class="string">'o'</span>, <span class="string">'p'</span>, <span class="string">'q'</span>, <span class="string">'r'</span>, <span class="string">'s'</span>, <span class="string">'t'</span>, <span class="string">'u'</span>, <span class="string">'v'</span>, <span class="string">'w'</span>, <span class="string">'x'</span>, <span class="string">'y'</span>, <span class="string">'z'</span>, <span class="string">'0'</span>, <span class="string">'1'</span>, <span class="string">'2'</span>,</span><br><span class="line">            <span class="string">'3'</span>, <span class="string">'4'</span>, <span class="string">'5'</span>, <span class="string">'6'</span>, <span class="string">'7'</span>, <span class="string">'8'</span>, <span class="string">'9'</span>, <span class="string">'+'</span>, <span class="string">'?'</span> &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Translates the specified Base64 string (as per Preferences.get(byte[])) into a byte array.</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throw</span> IllegalArgumentException if &lt;tt&gt;s&lt;/tt&gt; is not a valid Base64 string.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span>[] base64ToByteArray(String s) &#123;</span><br><span class="line">        <span class="keyword">return</span> base64ToByteArray(s, <span class="keyword">false</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Translates the specified "alternate representation" Base64 string into a byte array.</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throw</span> IllegalArgumentException or ArrayOutOfBoundsException if &lt;tt&gt;s&lt;/tt&gt; is not a valid alternate</span></span><br><span class="line"><span class="comment">     * representation Base64 string.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">byte</span>[] altBase64ToByteArray(String s) &#123;</span><br><span class="line">        <span class="keyword">return</span> base64ToByteArray(s, <span class="keyword">true</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">byte</span>[] base64ToByteArray(String s, <span class="keyword">boolean</span> alternate) &#123;</span><br><span class="line">        <span class="keyword">byte</span>[] alphaToInt = (alternate ? altBase64ToInt : base64ToInt);</span><br><span class="line">        <span class="keyword">int</span> sLen = s.length();</span><br><span class="line">        <span class="keyword">int</span> numGroups = sLen / <span class="number">4</span>;</span><br><span class="line">        <span class="keyword">if</span> (<span class="number">4</span> * numGroups != sLen) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"String length must be a multiple of four."</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">int</span> missingBytesInLastGroup = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> numFullGroups = numGroups;</span><br><span class="line">        <span class="keyword">if</span> (sLen != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (s.charAt(sLen - <span class="number">1</span>) == <span class="string">'='</span>) &#123;</span><br><span class="line">                missingBytesInLastGroup++;</span><br><span class="line">                numFullGroups--;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (s.charAt(sLen - <span class="number">2</span>) == <span class="string">'='</span>) &#123;</span><br><span class="line">                missingBytesInLastGroup++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">byte</span>[] result = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">3</span> * numGroups - missingBytesInLastGroup];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Translate all full groups from base64 to byte array elements</span></span><br><span class="line">        <span class="keyword">int</span> inCursor = <span class="number">0</span>, outCursor = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; numFullGroups; i++) &#123;</span><br><span class="line">            <span class="keyword">int</span> ch0 = base64toInt(s.charAt(inCursor++), alphaToInt);</span><br><span class="line">            <span class="keyword">int</span> ch1 = base64toInt(s.charAt(inCursor++), alphaToInt);</span><br><span class="line">            <span class="keyword">int</span> ch2 = base64toInt(s.charAt(inCursor++), alphaToInt);</span><br><span class="line">            <span class="keyword">int</span> ch3 = base64toInt(s.charAt(inCursor++), alphaToInt);</span><br><span class="line">            result[outCursor++] = (<span class="keyword">byte</span>) ((ch0 &lt;&lt; <span class="number">2</span>) | (ch1 &gt;&gt; <span class="number">4</span>));</span><br><span class="line">            result[outCursor++] = (<span class="keyword">byte</span>) ((ch1 &lt;&lt; <span class="number">4</span>) | (ch2 &gt;&gt; <span class="number">2</span>));</span><br><span class="line">            result[outCursor++] = (<span class="keyword">byte</span>) ((ch2 &lt;&lt; <span class="number">6</span>) | ch3);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Translate partial group, if present</span></span><br><span class="line">        <span class="keyword">if</span> (missingBytesInLastGroup != <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">int</span> ch0 = base64toInt(s.charAt(inCursor++), alphaToInt);</span><br><span class="line">            <span class="keyword">int</span> ch1 = base64toInt(s.charAt(inCursor++), alphaToInt);</span><br><span class="line">            result[outCursor++] = (<span class="keyword">byte</span>) ((ch0 &lt;&lt; <span class="number">2</span>) | (ch1 &gt;&gt; <span class="number">4</span>));</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (missingBytesInLastGroup == <span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">int</span> ch2 = base64toInt(s.charAt(inCursor++), alphaToInt);</span><br><span class="line">                result[outCursor++] = (<span class="keyword">byte</span>) ((ch1 &lt;&lt; <span class="number">4</span>) | (ch2 &gt;&gt; <span class="number">2</span>));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// assert inCursor == s.length()-missingBytesInLastGroup;</span></span><br><span class="line">        <span class="comment">// assert outCursor == result.length;</span></span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * Translates the specified character, which is assumed to be in the "Base 64 Alphabet" into its equivalent 6-bit</span></span><br><span class="line"><span class="comment">     * positive integer.</span></span><br><span class="line"><span class="comment">     * </span></span><br><span class="line"><span class="comment">     * <span class="doctag">@throw</span> IllegalArgumentException or ArrayOutOfBoundsException if c is not in the Base64 Alphabet.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">base64toInt</span><span class="params">(<span class="keyword">char</span> c, <span class="keyword">byte</span>[] alphaToInt)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">int</span> result = alphaToInt[c];</span><br><span class="line">        <span class="keyword">if</span> (result &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">"Illegal character "</span> + c);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * This array is a lookup table that translates unicode characters drawn from the "Base64 Alphabet" (as specified in</span></span><br><span class="line"><span class="comment">     * Table 1 of RFC 2045) into their 6-bit positive integer equivalents. Characters that are not in the Base64</span></span><br><span class="line"><span class="comment">     * alphabet but fall within the bounds of the array are translated to -1.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">byte</span> base64ToInt[]    = &#123; -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>,</span><br><span class="line">            -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, <span class="number">62</span>,</span><br><span class="line">            -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, <span class="number">63</span>, <span class="number">52</span>, <span class="number">53</span>, <span class="number">54</span>, <span class="number">55</span>, <span class="number">56</span>, <span class="number">57</span>, <span class="number">58</span>, <span class="number">59</span>, <span class="number">60</span>, <span class="number">61</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>,</span><br><span class="line">            <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>, <span class="number">16</span>, <span class="number">17</span>, <span class="number">18</span>, <span class="number">19</span>, <span class="number">20</span>, <span class="number">21</span>, <span class="number">22</span>, <span class="number">23</span>, <span class="number">24</span>, <span class="number">25</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, <span class="number">26</span>, <span class="number">27</span>, <span class="number">28</span>,</span><br><span class="line">            <span class="number">29</span>, <span class="number">30</span>, <span class="number">31</span>, <span class="number">32</span>, <span class="number">33</span>, <span class="number">34</span>, <span class="number">35</span>, <span class="number">36</span>, <span class="number">37</span>, <span class="number">38</span>, <span class="number">39</span>, <span class="number">40</span>, <span class="number">41</span>, <span class="number">42</span>, <span class="number">43</span>, <span class="number">44</span>, <span class="number">45</span>, <span class="number">46</span>, <span class="number">47</span>, <span class="number">48</span>, <span class="number">49</span>, <span class="number">50</span>, <span class="number">51</span> &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * This array is the analogue of base64ToInt, but for the nonstandard variant that avoids the use of uppercase</span></span><br><span class="line"><span class="comment">     * alphabetic characters.</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">byte</span> altBase64ToInt[] = &#123; -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>,</span><br><span class="line">            -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, -<span class="number">1</span>, <span class="number">62</span>, <span class="number">9</span>, <span class="number">10</span>,</span><br><span class="line">            <span class="number">11</span>, -<span class="number">1</span>, <span class="number">52</span>, <span class="number">53</span>, <span class="number">54</span>, <span class="number">55</span>, <span class="number">56</span>, <span class="number">57</span>, <span class="number">58</span>, <span class="number">59</span>, <span class="number">60</span>, <span class="number">61</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, -<span class="number">1</span>, <span class="number">15</span>, <span class="number">63</span>, <span class="number">16</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>,</span><br><span class="line">            -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, -<span class="number">1</span>, <span class="number">17</span>, -<span class="number">1</span>, <span class="number">18</span>, <span class="number">19</span>, <span class="number">21</span>, <span class="number">20</span>, <span class="number">26</span>, <span class="number">27</span>, <span class="number">28</span>,</span><br><span class="line">            <span class="number">29</span>, <span class="number">30</span>, <span class="number">31</span>, <span class="number">32</span>, <span class="number">33</span>, <span class="number">34</span>, <span class="number">35</span>, <span class="number">36</span>, <span class="number">37</span>, <span class="number">38</span>, <span class="number">39</span>, <span class="number">40</span>, <span class="number">41</span>, <span class="number">42</span>, <span class="number">43</span>, <span class="number">44</span>, <span class="number">45</span>, <span class="number">46</span>, <span class="number">47</span>, <span class="number">48</span>, <span class="number">49</span>, <span class="number">50</span>, <span class="number">51</span>, <span class="number">22</span>, <span class="number">23</span>, <span class="number">24</span>, <span class="number">25</span> &#125;;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/JAVA/">JAVA</a>
+</div>
+
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://www.iswin.org/2015/09/21/Druid-DataSource-ConnectString-Decrypt/" data-title="Druid数据连接池字符串解密 | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/11/13/Apache-CommonsCollections-Deserialized-Vulnerability/" title="JAVA Apache-CommonsCollections 序列化漏洞分析以及漏洞高级利用">
+  <strong>上一篇：</strong><br/>
+  <span>
+  JAVA Apache-CommonsCollections 序列化漏洞分析以及漏洞高级利用</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/06/13/hack-oracle/"  title="Oracle Sql注入利用方法">
+ <strong>下一篇：</strong><br/> 
+ <span>Oracle Sql注入利用方法
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Driud是什么"><span class="toc-number">1.</span> <span class="toc-text">Driud是什么</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Druid解密方式"><span class="toc-number">2.</span> <span class="toc-text">Druid解密方式</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#远程加载"><span class="toc-number">2.1.</span> <span class="toc-text">远程加载</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#系统属性中获取秘钥"><span class="toc-number">2.2.</span> <span class="toc-text">系统属性中获取秘钥</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#默认秘钥"><span class="toc-number">2.3.</span> <span class="toc-text">默认秘钥</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#解密"><span class="toc-number">3.</span> <span class="toc-text">解密</span></a></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/" title="Python">Python<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Deserialize/" title="Deserialize">Deserialize<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/RCE/" title="RCE">RCE<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Scikit-Learn/" title="Scikit-Learn">Scikit-Learn<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Pybrain/" title="Pybrain">Pybrain<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Cdlinux/" title="Cdlinux">Cdlinux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://p2j.cn" target="_blank" title="园长博客">园长博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.shack2.org" target="_blank" title="Shack2博客">Shack2博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.cnseay.com" target="_blank" title="Seay博客">Seay博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.z7ys.com" target="_blank" title="z7y博客">z7y博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bluereader.org" target="_blank" title="深蓝阅读">深蓝阅读</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.untnt.com" target="_blank" title="TNT博客">TNT博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.03sec.com/" target="_blank" title="Sky博客">Sky博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jxcm.net/" target="_blank" title="DCC博客">DCC博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://cnbraid.com" target="_blank" title="Braid&#39;s Blog">Braid&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.xiyv.net" target="_blank" title="wolf&#39;s blog">wolf&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.blackh4t.org" target="_blank" title="DarkRay&#39;s BLoG">DarkRay&#39;s BLoG</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.00theway.org" target="_blank" title="00theway&#39;s Blog">00theway&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bksec.net/" target="_blank" title="my5t3ry&#39;s Blog">my5t3ry&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.00day.com/" target="_blank" title="Luoye&#39;s blog">Luoye&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.imbeee.com" target="_blank" title="Beeeの零碎事">Beeeの零碎事</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> 当才华还撑不起野心时，那就应该静下心来学习。 <br/>
+			当能力还驾奴不了目标时，就应该沉下心来历练。</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
+		Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a>
+		
+		<a href="/about" target="_blank" title="iswin">iswin</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#nothing"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>

